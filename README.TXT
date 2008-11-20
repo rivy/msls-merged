@@ -1,0 +1,29 @@
+GNU ls ported to Microsoft Windows
+
+This is an adaptation of the GNU `ls' directory information
+utility for Microsoft Windows.  It shows informaton on
+on NTFS files in a format familiar to UNIX users.
+
+IMPORTANT NOTE: Get the latest version from
+     http://utools.com/download.asp
+
+To install, copy ls.exe to your favorite executable folder for your
+command line utilities.  Or copy to \Windows\System32\ls.exe.  (On 64-bit 
+operating systems install a second copy in \Windows\SysWOW64\ls.exe.)
+
+Set the LS_OPTIONS environment variable in Control Panel -> System
+-> Advanced -> Environment Variables.  The recommended settings are:
+
+   -bhAC --more --color=auto --recent --streams
+
+For documentation view msls.htm in your web browser.
+For updates go to http://utools.com/msls.asp.
+Send feedback and bug reports to msls@algintech.com.
+
+Also included is the native Windows version of the `grep' text search 
+utility.  It understands backslash notation, e.g., grep "search" *\*.txt
+Use the environment variable GREP_OPTIONS:
+
+	--binary-files=text -d skip --color=auto
+
+Alan Klietz, August 2008
