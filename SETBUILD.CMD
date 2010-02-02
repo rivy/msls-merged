@@ -51,11 +51,11 @@ rem
 rem Common paths to the MS SDK
 rem Note: Put c:\lbin first to pick up the right copy of rebase.exe!
 rem
-rem set PATH=C:\lbin;H:\mssdk07\bin\winnt;H:\mssdk07\bin;%basepath%
+rem set PATH=C:\lbin;H:\mssdk09\bin\winnt;H:\mssdk09\bin;%basepath%
 set PATH=%basepath%
-rem set INCLUDE=H:\mssdk07\include;%baseinclude%
+rem set INCLUDE=H:\mssdk09\include;%baseinclude%
 set INCLUDE=%baseinclude%
-rem set LIB=H:\mssdk07\lib;%baselib%
+rem set LIB=H:\mssdk09\lib;%baselib%
 set LIB=%baselib%
 rem
 if "%1"=="msvc16" goto m16
@@ -109,7 +109,7 @@ set AMD64=
 set StudioDir=G:\DevStudio
 set PATH=H:\mssdk06\bin;H:\mssdk06\bin\winnt;%PATH%;%StudioDir%\Common\MSDev98\Bin;%StudioDir%\Common\Tools;%StudioDir%\VC98\bin
 set LIB=H:\mssdk06\lib;%StudioDir%\VC98\mfc\lib;%StudioDir%\VC98\lib;%LIB%
-rem set LIB=%LIB%;E:\ae\libvc96;H:\mssdk07\lib;%FrameworkSDKDir%lib;H:\DDK\6000\lib\mfc\i386;H:\DDK\6000\lib\crt\i386;H:\DDK\6000\lib\atl\i386
+rem set LIB=%LIB%;E:\ae\libvc96;H:\mssdk09\lib;%FrameworkSDKDir%lib;H:\DDK\7000\lib\mfc\i386;H:\DDK\7000\lib\crt\i386;H:\DDK\7000\lib\atl\i386
 set INCLUDE=H:\mssdk06\include;H:\mssdk06\include\atl;H:\mssdk06\include\mfc;H:\mssdk06\include\crt;%INCLUDE%
 rem set INCLUDE=H:\mssdk06\include;%INCLUDE%;%StudioDir%\VC98\atl\include;%StudioDir%\VC98\mfc\include;%StudioDir%\VC98\include
 set StudioDir=
@@ -135,12 +135,12 @@ REM Need path %FrameworkDir%%FrameworkVersion% for gac, caspol, ilasm, regasm
 REM
 set VSInstallDir=H:\%VCName%\
 set VCInstallDir=%VSInstallDir%VC\
-set PATH=H:\mssdk07\bin;%FrameworkSDKDir%Bin;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%PATH%
+set PATH=H:\mssdk09\bin;%FrameworkSDKDir%Bin;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%PATH%
 REM Use PE+ versions of tools
-if not "%ProgramFiles(x86)%"=="" set PATH=H:\mssdk07\bin\X64;H:\mssdk07\bin\win64\X64;%PATH%
-set LIB=%LIB%;H:\mssdk07\lib;%FrameworkSDKDir%lib;%VCInstallDir%lib;%VCInstallDir%atlmfc\lib
+if not "%ProgramFiles(x86)%"=="" set PATH=H:\mssdk09\bin\X64;H:\mssdk09\bin\win64\X64;%PATH%
+set LIB=%LIB%;H:\mssdk09\lib;%FrameworkSDKDir%lib;%VCInstallDir%lib;%VCInstallDir%atlmfc\lib
 set LIBPATH=%FrameworkDir%%FrameworkVersion%;%VCInstallDir%atlmfc\lib
-set INCLUDE=%INCLUDE%;H:\mssdk07\include;%FrameworkSDKDir%include;%VCInstallDir%include;%VCInstallDir%atlmfc\include
+set INCLUDE=%INCLUDE%;H:\mssdk09\include;%FrameworkSDKDir%include;%VCInstallDir%include;%VCInstallDir%atlmfc\include
 REM
 if "%force%"=="yes" goto force_vc9
 cmp -s "%VCSettings%\VCComponents_Alan_vc9.dat" "%VCSettings%\VCComponents.dat"
@@ -172,12 +172,12 @@ REM Need path %FrameworkDir%%FrameworkVersion% for gac, caspol, ilasm, regasm
 REM
 set VSInstallDir=H:\%VCName%\
 set VCInstallDir=%VSInstallDir%VC\
-set PATH=H:\mssdk07\bin;%FrameworkSDKDir%Bin;%VCInstallDir%bin\x86_amd64;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%PATH%
+set PATH=H:\mssdk09\bin;%FrameworkSDKDir%Bin;%VCInstallDir%bin\x86_amd64;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%PATH%
 REM Use PE+ versions of tools
-if not "%ProgramFiles(x86)%"=="" set PATH=H:\mssdk07\bin\X64;H:\mssdk07\bin\win64\X64;%PATH%
-set LIB=H:\mssdk07\lib\x64;%FrameworkSDKDir%lib\amd64;%VCInstallDir%lib\amd64;%VCInstallDir%atlmfc\lib\amd64
+if not "%ProgramFiles(x86)%"=="" set PATH=H:\mssdk09\bin\X64;H:\mssdk09\bin\win64\X64;%PATH%
+set LIB=H:\mssdk09\lib\x64;%FrameworkSDKDir%lib\amd64;%VCInstallDir%lib\amd64;%VCInstallDir%atlmfc\lib\amd64
 set LIBPATH=%FrameworkDir%%FrameworkVersion%;%VCInstallDir%atlmfc\lib\amd64
-set INCLUDE=H:\mssdk07\include;%FrameworkSDKDir%include;%VCInstallDir%include;%VCInstallDir%atlmfc\include;%INCLUDE%
+set INCLUDE=H:\mssdk09\include;%FrameworkSDKDir%include;%VCInstallDir%include;%VCInstallDir%atlmfc\include;%INCLUDE%
 REM
 if "%force%"=="yes" goto force_vc8x64
 cmp -s "%VCSettings%\VCComponents_Alan_vc9.dat" "%VCSettings%\VCComponents.dat"
@@ -205,7 +205,7 @@ REM Set the build environment for Visual Studio 200x (VC9), target 32-bit x86
 REM Use backward-compatible DLLs (MFC42, MSVCRT)
 REM
 REM Uses Visual Studio 200x (VC9) compiler, but with VC6 includes and libraries.
-REM The VC6 Includes were updated for 32/64-bit in \DDK\6000\
+REM The VC6 Includes were updated for 32/64-bit in \DDK\7000\
 REM
 set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework\
 REM 
@@ -213,15 +213,15 @@ REM Need path %FrameworkDir%%FrameworkVersion% for gac, caspol, ilasm, regasm
 REM
 set VSInstallDir=H:\%VCName%\
 set VCInstallDir=%VSInstallDir%VC\
-set PATH=H:\mssdk07\bin;%FrameworkSDKDir%Bin;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%PATH%
-if not "%ProgramFiles(x86)%"=="" set PATH=H:\mssdk07\bin\X64;H:\mssdk07\bin\win64\X64;%PATH%
+set PATH=H:\mssdk09\bin;%FrameworkSDKDir%Bin;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%PATH%
+if not "%ProgramFiles(x86)%"=="" set PATH=H:\mssdk09\bin\X64;H:\mssdk09\bin\win64\X64;%PATH%
 rem
 set StudioDir=G:\DevStudio
-set LIB=%LIB%;%VCLib%;H:\mssdk07\lib;%FrameworkSDKDir%lib;%StudioDir%\VC98\mfc\lib;%StudioDir%\VC98\lib
-rem Cannot use the following - missing H:\DDK\6000\bin\msvcrtd.dll
-rem set LIB=%LIB%;%VCLib%;H:\mssdk07\lib;%FrameworkSDKDir%lib;H:\DDK\6000\lib\crt\i386;H:\DDK\6000\lib\atl\i386;H:\DDK\6000\lib\mfc\i386
+set LIB=%LIB%;%VCLib%;H:\mssdk09\lib;%FrameworkSDKDir%lib;%StudioDir%\VC98\mfc\lib;%StudioDir%\VC98\lib
+rem Cannot use the following - missing H:\DDK\7000\bin\msvcrtd.dll
+rem set LIB=%LIB%;%VCLib%;H:\mssdk09\lib;%FrameworkSDKDir%lib;H:\DDK\7000\lib\crt\i386;H:\DDK\7000\lib\atl\i386;H:\DDK\7000\lib\mfc\i386
 set LIBPATH=%FrameworkDir%%FrameworkVersion%
-set INCLUDE=H:\mssdk07\include;H:\DDK\6000\inc\crt;H:\DDK\6000\inc\mfc42;H:\DDK\6000\inc\atl30;H:\DDK\6000\inc\api\crt\stl60;%FrameworkSDKDir%include;%INCLUDE%
+set INCLUDE=H:\mssdk09\include;H:\DDK\7000\inc\crt;H:\DDK\7000\inc\mfc42;H:\DDK\7000\inc\atl30;H:\DDK\7000\inc\api\crt\stl60;%FrameworkSDKDir%include;%INCLUDE%
 set StudioDir=
 REM
 if "%force%"=="yes" goto force_vc86
@@ -249,7 +249,7 @@ REM
 REM Set the build environment for VC, target 64-bit x64 (W2K3 x64 and XP x64)
 REM
 REM Uses the Visual Studio 200x (VC9) compiler, but with the VC6 includes and
-REM mssdk06 libs.  The VC6 Includes were updated for 32/64-bit in \DDK\6000\
+REM mssdk06 libs.  The VC6 Includes were updated for 32/64-bit in \DDK\7000\
 REM
 set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework64\
 REM 
@@ -259,17 +259,17 @@ set VSInstallDir=H:\%VCName%\
 set VCInstallDir=%VSInstallDir%VC\
 set PATH=H:\mssdk06\bin;%FrameworkSDKDir%Bin;H:\mssdk06\bin\win64\x86\AMD64;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%PATH%
 rem Cannot use the VS200x compiler because it generates unref symbols
-rem set PATH=H:\mssdk07\bin;%FrameworkSDKDir%Bin;%VCInstallDir%bin\x86_amd64;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%PATH%
+rem set PATH=H:\mssdk09\bin;%FrameworkSDKDir%Bin;%VCInstallDir%bin\x86_amd64;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%PATH%
 REM Use PE+ versions of tools
-if not "%ProgramFiles(x86)%"=="" set PATH=H:\mssdk07\bin\X64;H:\mssdk07\bin\win64\X64;%PATH%
+if not "%ProgramFiles(x86)%"=="" set PATH=H:\mssdk09\bin\X64;H:\mssdk09\bin\win64\X64;%PATH%
 rem
 set LIB=H:\mssdk06\lib\AMD64;%FrameworkSDKDir%lib\amd64;H:\mssdk06\lib\amd64\atlmfc;H:\mssdk06\lib\amd64
-rem Cannot use the following - missing H:\DDK\6000\bin\amd64\msvcrtd.dll
-rem set LIB=%LIB%;%VCLib%;H:\mssdk07\lib;%FrameworkSDKDir%lib;H:\DDK\6000\lib\crt\amd64;H:\DDK\6000\lib\atl\amd64;H:\DDK\6000\lib\mfc\amd64
+rem Cannot use the following - missing H:\DDK\7000\bin\amd64\msvcrtd.dll
+rem set LIB=%LIB%;%VCLib%;H:\mssdk09\lib;%FrameworkSDKDir%lib;H:\DDK\7000\lib\crt\amd64;H:\DDK\7000\lib\atl\amd64;H:\DDK\7000\lib\mfc\amd64
 set LIBPATH=%FrameworkDir%%FrameworkVersion%
 set INCLUDE=H:\mssdk06\include;H:\mssdk06\include\mfc;H:\mssdk06\include\atl;H:\mssdk06\include\crt;%FrameworkSDKDir%include;%INCLUDE%
 rem Cannot use the following
-rem set INCLUDE=H:\mssdk07\include;H:\DDK\6000\inc\crt;H:\DDK\6000\inc\mfc42;H:\DDK\6000\inc\atl30;H:\DDK\6000\inc\api\crt\stl60;%FrameworkSDKDir%include;%INCLUDE%
+rem set INCLUDE=H:\mssdk09\include;H:\DDK\7000\inc\crt;H:\DDK\7000\inc\mfc42;H:\DDK\7000\inc\atl30;H:\DDK\7000\inc\api\crt\stl60;%FrameworkSDKDir%include;%INCLUDE%
 REM
 if "%force%"=="yes" goto force_vc86x64
 cmp -s "%VCSettings%\VCComponents_Alan_vc96.dat" "%VCSettings%\VCComponents.dat"

@@ -44,6 +44,19 @@
 #include "ls.h"
 #include "Registry.h"
 
+
+typedef LONG (WINAPI *PFNREGLOADMUISTRINGW) (
+    HKEY       hKey,
+    LPCWSTR    pszValue,
+    LPWSTR     pszOutBuf,
+    DWORD      cbOutBuf,
+    LPDWORD    pcbData,
+    DWORD      Flags,   
+    LPCWSTR    pszDirectory
+);
+static PFNREGLOADMUISTRINGW pfnRegLoadMUIStringW;
+
+
 // Defined in Token.cpp
 extern BOOL SetVirtualView(BOOL bEnable, BOOL bVerify);
 
@@ -880,6 +893,48 @@ print_registry_value(struct cache_entry *ce)
 		}
 		bUnicode = FALSE;
 	}
+
+	BOOL bExpandedMui = FALSE;
+
+	if (IsVista && gbExpandMui) {
+		if ((dwGotType == REG_SZ || dwGotType == REG_EXPAND_SZ || dwGotType == REG_MULTI_SZ)
+			&& dwSize >= sizeof(WCHAR) && ((LPCWSTR)pbData)[0] == L'@'
+			&& DynaLoad("ADVAPI32.DLL", "RegLoadMUIStringW", (PPFN)&pfnRegLoadMUIStringW)) {
+			PBYTE pbMuiData = NULL;
+			//
+			// Get the required buffer size for the expanded MUI string
+			//
+			DWORD dwMuiLen = 0; // byte len
+			WCHAR wszDummy[4]; // dummy buffer
+			wszDummy[0] = L'\0';
+			if ((lErrCode = (*pfnRegLoadMUIStringW)(fr->fr_hKey, wszName,
+					wszDummy, 0, &dwMuiLen, 0, NULL)) != ERROR_MORE_DATA) {
+				goto NoMui; // Use the @-string as-is
+			}
+
+			pbMuiData = (PBYTE) alloca(dwMuiLen+8);
+
+			//
+			// Now read the data for real
+			//
+			// dwMuiLen will be overwritten with the actual length
+			//
+			if ((lErrCode = (*pfnRegLoadMUIStringW)(fr->fr_hKey, wszName,
+					(LPWSTR)pbMuiData, dwMuiLen, &dwMuiLen, 0, NULL)) != ERROR_SUCCESS) {
+				goto NoMui; // Use the @-string as-is
+			}
+			//
+			// Replace pbData with the expanded MUI data
+			//
+			pbData = pbMuiData;
+			dwSize = dwMuiLen;
+
+			bExpandedMui = TRUE;
+		}
+	}
+
+NoMui:
+
 	fd.size = dwSize;
 	_RegFindClose((long)fr);
 
@@ -942,6 +997,9 @@ print_registry_value(struct cache_entry *ce)
 				case REG_LINK:
 					more_printf("            REG_LINK  (%u bytes)\n", dwSize);
 					break;
+				case REG_MULTI_SZ:
+					more_printf("            REG_MULTI_SZ  (%u bytes)\n", dwSize);
+					break;
 				case REG_RESOURCE_LIST:
 					more_printf("            REG_RESOURCE_LIST  (%u bytes)\n", dwSize);
 					break;
@@ -1000,6 +1058,10 @@ print_registry_value(struct cache_entry *ce)
 					dwSize);
 			}
 			break;
+	}
+
+	if (bExpandedMui) {
+			more_printf("                Expanded MUI string.\n");
 	}
 
 	return TRUE;

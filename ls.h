@@ -50,6 +50,8 @@ extern BOOL gbRegSetVal; // AEK set registry test-value
 extern BOOL gbOemCp; // AEK are we using the OEM console codepage?
 
 extern int virtual_view; // --virtual
+
+extern BOOL gbExpandMui; // AEK --expandmui
 #endif
 
 ///////////////////////////////////////////////////////////////////

@@ -43,7 +43,7 @@ set URL="http://utools.com/msls.asp"
 rem
 rem Sign the .EXE with Authenticode Certificate
 rem
-signcode -spc c:\certcode06.spc -v c:\certcode06.pvk -n "ls for Windows" -a sha1 -i %URL% -t "http://timestamp.verisign.com/scripts/timestamp.dll" Release\ls.exe
+signcode -spc c:\certcode09.spc -v c:\certcode09.pvk -n "ls for Windows" -a sha1 -i %URL% -t "http://timestamp.verisign.com/scripts/timestamp.dll" Release\ls.exe
 if errorlevel 1 goto done
 copy /Y Release\ls.exe c:\lbin\ls.exe
 rem
@@ -95,7 +95,7 @@ set WZIPSE="%ProgramFiles(x86)%\wzipse\winzipse.exe"
 rem
 rem Sign the self-extracting .EXE with Authenticode Certificate
 rem
-signcode -spc c:\certcode06.spc -v c:\certcode06.pvk -n "ls for Windows" -a sha1 -i %URL% -t "http://timestamp.verisign.com/scripts/timestamp.dll" msls.exe
+signcode -spc c:\certcode09.spc -v c:\certcode09.pvk -n "ls for Windows" -a sha1 -i %URL% -t "http://timestamp.verisign.com/scripts/timestamp.dll" msls.exe
 if errorlevel 1 goto done
 cd ..
 echo Build complete in DISTRIB_ZIP.

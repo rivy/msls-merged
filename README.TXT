@@ -4,12 +4,13 @@ This is an adaptation of the GNU `ls' directory information
 utility for Microsoft Windows.  It shows informaton on
 on NTFS files in a format familiar to UNIX users.
 
-IMPORTANT NOTE: Get the latest version from
+`ls' is updated when Microsoft releases new versions of of Windows.
+Get the latest version from
      http://utools.com/download.asp
 
-To install, copy ls.exe to your favorite executable folder for your
-command line utilities.  Or copy to \Windows\System32\ls.exe.  (On 64-bit 
-operating systems install a second copy in \Windows\SysWOW64\ls.exe.)
+To install: Copy ls.exe to your favorite executable folder for your
+command line utilities.  Or copy to C:\Windows\System32\ls.exe.  (On 64-bit 
+operating systems install a second copy in C:\Windows\SysWOW64\ls.exe.)
 
 Set the LS_OPTIONS environment variable in Control Panel -> System
 -> Advanced -> Environment Variables.  The recommended settings are:
@@ -26,4 +27,4 @@ Use the environment variable GREP_OPTIONS:
 
 	--binary-files=text -d skip --color=auto
 
-Alan Klietz, August 2008
+Alan Klietz, January 2009

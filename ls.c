@@ -527,6 +527,8 @@ BOOL gbRegSetVal; // AEK set registry test-value
 
 BOOL gbOemCp; // AEK are we using the OEM console codepage?
 
+BOOL gbExpandMui; // AEK expand MUI registry strings
+
 extern BOOL IsVista;
 #endif
 
@@ -836,6 +838,7 @@ enum
   VIRTUAL_OPTION, // AEK
   ANSICP_OPTION, // AEK
   OEMCP_OPTION, // AEK
+  EXPANDMUI_OPTION, // AEK
 #endif
   COMMAND_LINE_OPTION, // AEK
 };
@@ -909,6 +912,7 @@ static struct option const long_options[] =
   {"virtual", no_argument, 0, VIRTUAL_OPTION}, // AEK
   {"ansi-cp", no_argument, 0, ANSICP_OPTION}, // AEK
   {"oem-cp", no_argument, 0, OEMCP_OPTION}, // AEK
+  {"expandmui", no_argument, 0, EXPANDMUI_OPTION}, // AEK
 #endif
   // Mark the end of LS_OPTIONS and the start of real command line args - AEK
   {COMMAND_LINE_OPTION_MARKER, no_argument, 0, COMMAND_LINE_OPTION}, // AEK
@@ -2267,6 +2271,13 @@ Use `--si' for the old meaning."));
 	case REGDELVAL_OPTION: // AEK
 	  gbRegDelVal = 1;
 	  break;
+
+	case EXPANDMUI_OPTION: // AEK
+	  if (IsVista) {
+	    gbExpandMui = TRUE;
+	  }
+	  break;
+
 #endif // WIN32 AEK
 
 	case COMMAND_LINE_OPTION: // AEK
@@ -4932,7 +4943,7 @@ Get the latest version at http://utools.com/msls.asp\n")); // AEK
       --format=WORD          across -x, commas -m, horizontal -x, long -l,\n\
                                single-column -1, verbose -l, vertical -C\n\
       --full-time            list both full date and full time\n\
-  -g, --groups[=y/n]         show POSIX group information)\n\
+  -g, --groups[=y/n]         show POSIX group information\n\
   -G                         do not show POSIX group information\n\
       --gids[=STYLE]         show POSIX group security identifiers:\n\
                                STYLE may be `long', `short', or `none'\n\
@@ -4981,7 +4992,7 @@ Get the latest version at http://utools.com/msls.asp\n")); // AEK
                                networks, diskettes, or CD-ROMs (see --fast)\n\
       --sort=WORD            sort by: none -U, size -S, time -t,\n\
                                version -v, extension -X, case\n\
-                             status -c, time -t, atime -u, access -u, use -u\n\
+                               status -c, time -t, atime -u, access -u, use -u\n\
       --streams[=y/n]        report files containing streams (-F -p --color)\n\
                                with -l: print the names of the streams\n\
       --time=WORD            show time as WORD instead of modification time:\n\
@@ -4993,7 +5004,7 @@ Get the latest version at http://utools.com/msls.asp\n")); // AEK
                                full-iso, long-iso, iso, +FORMAT.\n\
                                FORMAT is based on strftime; if FORMAT is\n\
                                FORMAT1!FORMAT2, FORMAT1 applies to\n\
-                               non-recent files and FORMAT2 to recent files;\n\
+                               non-recent files and FORMAT2 to recent files\n\
 "));
       more_printf (_("\
   -t                         sort by modification time\n\
