@@ -16,7 +16,7 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-/* $Id: dircolors.c,v 1.3 2007/10/03 20:41:52 cvsalan Exp $ */
+/* $Id: dircolors.c,v 1.4 2010/05/14 02:34:55 cvsalan Exp $ */
 
 #if HAVE_CONFIG_H
 # include <config.h>
@@ -463,7 +463,7 @@ main (int argc, char **argv)
 
   atexit (close_stdout);
 
-  while ((optc = getopt_long (argc, argv, "bcp", long_options, NULL)) != -1)
+  while ((optc = getopt_long (argc, argv, "bcdp", long_options, NULL)) != -1)
     switch (optc)
       {
       case 'b':	/* Bourne shell syntax.  */

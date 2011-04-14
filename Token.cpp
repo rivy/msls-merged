@@ -7,7 +7,7 @@
 //
 // Distributed under GNU General Public License version 2.
 //
-// $Id: Token.cpp,v 1.5 2008/01/14 06:59:14 cvsalan Exp $
+// $Id: Token.cpp,v 1.6 2010/05/14 02:34:55 cvsalan Exp $
 //
 
 #define WIN32_LEAN_AND_MEAN
@@ -451,6 +451,8 @@ static int _DumpToken(HANDLE hToken, BOOL bRecurseOk)
 		// The session key is created by encrypting the AuthenticationId
 		// with the user's logon password credentials.
 		//
+		// Assigned by the domain controller for the logon session.
+		//
 		more_printf("Token AuthenticationId: ");
 		more_printf("0x%08X%08X  (Logon session ID)\n", 
 			pTokenStatistics->AuthenticationId.HighPart,
@@ -475,22 +477,25 @@ static int _DumpToken(HANDLE hToken, BOOL bRecurseOk)
 				more_printf("Token Type: Unknown\n");
 				break;
 		}
-		switch ((int)pTokenStatistics->TokenType) {
-			case SecurityAnonymous:
-				more_printf("Token Impersonation Level: Anonymous\n");
-				break;
-			case SecurityIdentification:
-				more_printf("Token Impersonation Level: Identification\n");
-				break;
-			case SecurityImpersonation:
-				more_printf("Token Impersonation Level: Impersonation\n");
-				break;
-			case SecurityDelegation:
-				more_printf("Token Impersonation Level: Delegation\n");
-				break;
-			default:
-				more_printf("Token Impersonation Level: Unknown\n");
-				break;
+		// TokenType is undefined for a primary token
+		if (pTokenStatistics->TokenType != TokenPrimary) {
+			switch ((int)pTokenStatistics->TokenType) {
+				case SecurityAnonymous:
+					more_printf("Token Impersonation Level: Anonymous\n");
+					break;
+				case SecurityIdentification:
+					more_printf("Token Impersonation Level: Identification\n");
+					break;
+				case SecurityImpersonation:
+					more_printf("Token Impersonation Level: Impersonation\n");
+					break;
+				case SecurityDelegation:
+					more_printf("Token Impersonation Level: Delegation\n");
+					break;
+				default:
+					more_printf("Token Impersonation Level: Unknown\n");
+					break;
+			}
 		}
 	}
 

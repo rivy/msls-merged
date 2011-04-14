@@ -5,7 +5,7 @@
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: windows-support.h,v 1.7 2007/11/06 00:30:06 cvsalan Exp $
+// $Id: windows-support.h,v 1.8 2010/05/14 02:34:55 cvsalan Exp $
 //
 
 #ifdef NEED_DIRENT_H
@@ -19,6 +19,7 @@ extern "C" {
 extern BOOL IsWindowsNT;
 extern BOOL IsWindowsXP;
 extern BOOL IsVista;
+extern BOOL IsWindows7;
 
 // Like VB Right$()
 extern const char *

@@ -11,7 +11,7 @@
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: Reparse.c,v 1.5 2007/12/12 06:41:25 cvsalan Exp $
+// $Id: Reparse.c,v 1.6 2010/05/14 02:34:55 cvsalan Exp $
 //
 
 #pragma warning(disable: 4305)  // truncated cast ok basetsd.h POINTER_64 - AEK

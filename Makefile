@@ -4,10 +4,10 @@
 #
 # Based on GNU FileUtils 4.1
 # 
-# Windows Extensions copyright (c) 2004, Algin Technology LLC
+# Windows Extensions copyright (c) 2011, Algin Technology LLC
 # Distributed under GNU General Public License version 2.
 #
-# $Id: Makefile,v 1.12 2008/08/28 22:44:31 cvsalan Exp $
+# $Id: Makefile,v 1.14 2011/01/27 22:19:56 cvsalan Exp $
 #
 
 
@@ -44,17 +44,17 @@
 # Note for Visual Studio 6
 # ------------------------
 #
-# Visual Studio 6 was withdrawn by Microsoft in response to a successful
-# lawsuit by Sun Microsystems.  This means that Visual Studio 6 is 
-# no longer available for sale anywhere.  Thus buying tools for building
-# applications for Windows 2000 or Windows 9x is no longer possible (legally).
+# Visual Studio 6 was withdrawn by Microsoft in response to a 
+# lawsuit by Sun Microsystems regarding J++ (Microsoft's Java implementation),
+# which Microsoft then withdrew by removing VS6 from the market.  This means
+# that Visual Studio 6 is no longer available for sale anywhere.
 #
 
 #
-# Compiling with Visual Studio 2005/2008 C++ 
-# ------------------------------------------
+# Compiling with Visual Studio 2005/2008/2010 C++ 
+# -----------------------------------------------
 #
-# Alternately you can use the Visual Studio 2005/2008 C++ compiler.
+# Alternately you can use the Visual Studio 2005/2008/2010 C++ compiler.
 # It uses the Windows Software Development Kit Update for Windows Vista,
 # dated February 2007 ("MSSDK07").
 #
@@ -80,12 +80,17 @@
 # setbuild vc8 --> Use VS2005 compiler (VC8) + VS2005 libs (MSVCR80.DLL)
 # setbuild vc96 --> Use VS2008 compiler (VC9) + VS6 libs
 # setbuild vc9 --> Use VS2008 compiler (VC9) + VS2008 libs (MSVCR90.DLL)
+# setbuild vc10 --> Use VS2010 compiler (VC10) + VS2010 libs (MSVCR100.DLL)
 #
-# WARNING: The linker (link.exe) in Visual Studio 2008 (VC9)
-# will hardwire the .EXE header to Version 5.  This will prevent execution 
-# on Windows NT or Windows 9x (Version 4).  To run on NT/Win9x you must build 
-# with VS2005 or with VS6.  If you build with VC9 then your ls.exe
-# will refuse to run on Window NT/Win9x.
+# Visual Studio 2010 (VC10) cannot be used for Windows 2000 because it drops
+# support for Windows 2000 and other older operating systems (W9x, NT, XP SP1,
+# W2K3 SP0).
+#
+# WARNING: The linker (link.exe) in Visual Studio 2008/2010 (VC9/VC10)
+# will hardwire the .EXE header to Version 5 or 5.01.  This will prevent
+# execution on Windows 2000, Windows NT (Version 5.0)
+# or Windows 9x (Version 4).  To run on 2000/NT/Win9x you must build with
+# VS2005 or with VS6. 
 # 
 USE_VS6=1
 
@@ -183,7 +188,7 @@ LDOPTS=/opt:nowin98 /subsystem:console
 # The VC9 linker does not provide an option to change
 # MajorOperatingSystemVersion to 4.
 #
-# The bug prevents msls from running on Win9x or NT if linked with VC9.
+# This prevents msls from running on Win9x or NT if linked with VC9.
 #
 LDOPTS=/opt:nowin98 /version:4.00 /subsystem:console,4.00
 !ENDIF

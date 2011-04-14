@@ -1,4 +1,4 @@
-/* $Id: ls.h,v 1.6 2008/01/15 13:20:06 cvsalan Exp $ */
+/* $Id: ls.h,v 1.7 2010/05/14 02:34:55 cvsalan Exp $ */
 
 #ifdef __cplusplus
 extern "C" {

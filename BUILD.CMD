@@ -3,7 +3,7 @@ setlocal
 REM
 REM BUILD.CMD - Build and install msls
 REM
-REM $Id: BUILD.CMD,v 1.7 2007/12/12 06:41:25 cvsalan Exp $
+REM $Id: BUILD.CMD,v 1.8 2010/05/14 02:34:55 cvsalan Exp $
 REM
 choice /C DR /N /M "[D]ebug or [R]elease? "
 if errorlevel 2 set BLDTYPE=Release

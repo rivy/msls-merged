@@ -6,7 +6,7 @@
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: Security.cpp,v 1.18 2008/08/28 22:44:32 cvsalan Exp $
+// $Id: Security.cpp,v 1.19 2010/05/14 02:34:55 cvsalan Exp $
 //
 
 #define WIN32_LEAN_AND_MEAN
@@ -93,12 +93,7 @@ static DWORD gdwSdSerial = 1;  // next SD serial # to allocate
    and special cases, many of which are barely documented or outright
    undocumented.  
    
-   For example, there are a half dozen ways you can take ownership
-   of someone else's object.  One way exploits an obscure quirk
-   that probably violates the security policy at most sites.
-   Microsoft apparently doesn't know about it (yet).
-   
-   In my opinion the whole thing should be scrapped and redesigned.
+   The whole thing should be scrapped and redesigned.
 */
 
 /*
@@ -592,6 +587,11 @@ static BOOL _LookupAccountSid(PSID pSid,
 		// Uses same text as icacls.exe
 		//
 		{
+			"S-1-16-0",  // Defined in WinNT.h but never seen
+			"Mandatory Label","Untrusted Mandatory Level",
+			(SID_NAME_USE)10 // SidTypeLabel
+		},
+		{
 			"S-1-16-4096",
 			"Mandatory Label","Low Mandatory Level",
 			(SID_NAME_USE)10 // SidTypeLabel
@@ -599,6 +599,11 @@ static BOOL _LookupAccountSid(PSID pSid,
 		{
 			"S-1-16-8192",
 			"Mandatory Label","Medium Mandatory Level",
+			(SID_NAME_USE)10 // SidTypeLabel
+		},
+		{
+			"S-1-16-8448",  // Defined in WinNT for Win7 SDK, never seen
+			"Mandatory Label","MediumPlus Mandatory Level",
 			(SID_NAME_USE)10 // SidTypeLabel
 		},
 		{

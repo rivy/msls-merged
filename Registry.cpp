@@ -6,7 +6,7 @@
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: Registry.cpp,v 1.12 2008/08/28 22:44:32 cvsalan Exp $
+// $Id: Registry.cpp,v 1.13 2010/05/14 02:34:55 cvsalan Exp $
 //
 
 #define WIN32_LEAN_AND_MEAN
@@ -829,8 +829,10 @@ print_registry_value(struct cache_entry *ce)
 			//
 			BOOL bReflectionDisabled = FALSE; // BUG: Reversed
 			if ((*pfnRegQueryReflectionKey)(fr->fr_hKey, &bReflectionDisabled) == ERROR_SUCCESS) {
-				if (bReflectionDisabled) { // BUG: Reversed
-					more_printf("            Reflection is disabled.\n");
+				if (!IsWindows7) { // Windows 7 disables all reflection always
+					if (bReflectionDisabled) { // BUG: Reversed
+						more_printf("            Reflection is disabled.\n");
+					}
 				}
 			}
 		  }

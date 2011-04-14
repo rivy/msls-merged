@@ -15,7 +15,7 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-/* $Id: ls.c,v 1.16 2008/01/15 13:20:06 cvsalan Exp $ */
+/* $Id: ls.c,v 1.18 2011/01/27 22:19:56 cvsalan Exp $ */
 
 /* If ls_mode is LS_MULTI_COL,
    the multi-column format is the default regardless
@@ -38,7 +38,7 @@
    Flaherty <dennisf@denix.elk.miles.com> based on original patches by
    Greg Lee <lee@uhunix.uhcc.hawaii.edu>.  */
 
-/* Microsoft Windows modifications copyright (c) 2007, Algin Technology LLC
+/* Microsoft Windows modifications copyright (c) 2011, Algin Technology LLC
    Written by Alan Klietz.  Distributed under
    GNU General Public License version 2. */
 

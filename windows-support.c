@@ -6,7 +6,7 @@
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: windows-support.c,v 1.3 2007/10/03 20:41:52 cvsalan Exp $
+// $Id: windows-support.c,v 1.4 2010/05/14 02:34:55 cvsalan Exp $
 //
 
 #pragma warning(disable: 4305)  // truncated cast ok basetsd.h POINTER_64 - AEK
@@ -30,6 +30,7 @@
 BOOL IsWindowsNT;
 BOOL IsWindowsXP;
 BOOL IsVista;
+BOOL IsWindows7;
 
 DWORD gbIsWindowsWOW64; // DWORD not BOOL
 
@@ -57,6 +58,10 @@ InitVersion() // also declared in ls.c
 		 	&& OSVersionInfoEx.dwMinorVersion >= 1) 
 		|| OSVersionInfoEx.dwMajorVersion > 5);
 	IsVista = IsWindowsNT && OSVersionInfoEx.dwMajorVersion >= 6;
+	IsWindows7 = IsVista &&
+		((OSVersionInfoEx.dwMajorVersion == 6 
+		 	&& OSVersionInfoEx.dwMinorVersion >= 1) 
+		|| OSVersionInfoEx.dwMajorVersion > 6);
 
 	//
 	// Determine if running in Wow64 mode
