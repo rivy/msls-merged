@@ -16,13 +16,18 @@ set VC10Settings=%USERPROFILE%\Local Settings\Application Data\Microsoft\MSBuild
 set VC9Settings=%LOCALAPPDATA%\Microsoft\VisualStudio\9.0\
 set VC10Settings=%LOCALAPPDATA%\Microsoft\MSBuild\v4.0\
 )
+
+rem Required for vc8-vc9 fallthru
 set VCSettings=%VC9Settings%
 
 set HomeVC8Settings=E:\home\alan\doc\Visual Studio 2005\Settings\
 set HomeVC9Settings=E:\home\alan\doc\Visual Studio 2008\Settings\
 set HomeVC10Settings=E:\home\alan\doc\Visual Studio 2010\Settings\
+
+rem Required for vc8-vc9 fallthru
 set HomeVCSettings=%HomeVC9Settings%
 
+rem Required for vc8-vc9 fallthru
 set VCName=VS2008
 set VCVersion=9.0
 set VCLib=E:\ae\libvc96
@@ -72,14 +77,16 @@ if "%1"=="vc86x64" goto vc86x64
 if "%1"=="vc96x64" goto vc96x64
 if "%1"=="vc10" goto vc10
 if "%1"=="vc10x64" goto vc10x64
-if "%1"=="vc10net" goto vc10net
-if "%1"=="vc10netx64" goto vc10netx64
+if "%1"=="vc10net35" goto vc10net35
+if "%1"=="vc10net35x64" goto vc10net35x64
+if "%1"=="vc10net4" goto vc10net4
+if "%1"=="vc10net4x64" goto vc10net4x64
 if "%1"=="vc106x64" goto vc106x64
 if "%1"=="watcom32" goto w32
 if "%1"=="watcom32_win32s" goto w32_win32s
 if "%1"=="watcom32_os2" goto w32_os2
 if "%1"=="watcom32_nt" goto w32_nt
-echo Usage: setbuild [vc6,vc8,vc9,vc10,vc8x64,vc9x64,vc10x64,vc86,vc96,vc86x64,vc96x64,vc106x64,vc10net,vc10netx64,msvc16,watcom32,watcom32_win32s,watcom32_os2,watcom32_nt,restore]
+echo Usage: setbuild [vc6,vc8,vc9,vc10,vc8x64,vc9x64,vc10x64,vc86,vc96,vc86x64,vc96x64,vc106x64,vc10net35,vc10net35x64,vc10net4,vc10net4x64,msvc16,watcom32,watcom32_win32s,watcom32_os2,watcom32_nt,restore]
 goto done
 :restore
 if "%basepath%"=="" goto norestore
@@ -107,7 +114,7 @@ set Platform=
 set VSInstallDir=
 set VCInstallDir=
 set WindowsSdkDir=
-set WindowsSdkDirVC10=
+set WindowsSdkDir06=
 set DevEnvDir=
 set LIBPATH=
 :norestore
@@ -131,8 +138,8 @@ set FrameworkVersion64=
 set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework\
 set FrameworkDir32=%SystemRoot%\Microsoft.NET\Framework\
 set FrameworkDir64=
-set WindowsSdkDir=H:\mssdk06\
-set WindowsSdkDirVC10=
+set WindowsSdkDir=H:\MSSDK06\
+set WindowsSdkDir06=
 set DevEnvDir=
 set Platform=
 set AMD64=
@@ -140,7 +147,7 @@ set VSInstallDir=G:\DevStudio\
 set VCInstallDir=%VSInstallDir%VC98\
 set PATH=%WindowsSdkDir%bin;%WindowsSdkDir%bin\winnt;%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%;%PATH%;%VSInstallDir%Common\MSDev98\Bin;%VSInstallDir%Common\Tools;%VCInstallDir%bin
 set LIB=%WindowsSdkDir%lib;H:\DDK\7100\lib\atl\i386;%VCInstallDir%mfc\lib;%VCInstallDir%lib;%LIB%;%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%
-rem set LIB=%LIB%;E:\ae\libvc96;H:\mssdk09\lib;%FrameworkSDKDir%lib;H:\DDK\7100\lib\atl\i386;H:\DDK\7100\lib\mfc\i386;H:\DDK\7100\lib\crt\i386;H:\DDK\7100\lib\atl\i386
+rem set LIB=%LIB%;E:\ae\libvc96;H:\MSSDK09\lib;%FrameworkSDKDir%lib;H:\DDK\7100\lib\atl\i386;H:\DDK\7100\lib\mfc\i386;H:\DDK\7100\lib\crt\i386;H:\DDK\7100\lib\atl\i386
 set LIBPATH=%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%
 set INCLUDE=%WindowsSdkDir%include;%WindowsSdkDir%include\atl;%WindowsSdkDir%include\mfc;%WindowsSdkDir%include\crt;%INCLUDE%
 rem set INCLUDE=%WindowsSdkDir%include;%INCLUDE%;%VCInstallDir%atl\include;%VCInstallDir%mfc\include;%VCInstallDir%include
@@ -157,7 +164,7 @@ set VCVersion=8.0
 set FrameworkVersion=v2.0.50727
 set FrameworkSDKDir=H:\VS2005\SDK\v2.0\
 :vc9
-set WindowsSdkDir=H:\mssdk09\
+set WindowsSdkDir=H:\MSSDK09\
 set VCLib=
 set AMD64=
 REM
@@ -196,7 +203,7 @@ set VCVersion=8.0
 set FrameworkVersion=v2.0.50727
 set FrameworkSDKDir=H:\VS2005\SDK\v2.0\
 :vc9x64
-set WindowsSdkDir=H:\mssdk09\
+set WindowsSdkDir=H:\MSSDK09\
 set VCLib=
 set AMD64=1
 REM
@@ -236,7 +243,7 @@ set VCLib=E:\ae\libvc86
 set FrameworkVersion=v2.0.50727
 set FrameworkSDKDir=H:\VS2005\SDK\v2.0\
 :vc96
-set WindowsSdkDir=H:\mssdk09\
+set WindowsSdkDir=H:\MSSDK09\
 set AMD64=
 REM
 REM Set the build environment for Visual Studio 200x (VC9), target 32-bit x86
@@ -280,8 +287,8 @@ REM Set the build environment for VC8 DevEnv.exe and vcbuild.exe, but
 REM target backward-compatible 64-bit x64 (W2K3 x64 and XP x64).
 REM
 REM Uses the March 2006 Platform SDK cross-compiler 
-REM H:\mssdk06\bin\win64\x86\AMD64\cl.exe (version 14.00.40310) with
-REM the VC6 includes and mssdk06 libs.  The VC6 includes are updated
+REM H:\MSSDK06\bin\win64\x86\AMD64\cl.exe (version 14.00.40310) with
+REM the VC6 includes and MSSDK06 libs.  The VC6 includes are updated
 REM for 32/64-bit in \DDK\7100\.
 REM
 set VCSettings=%VC8Settings%
@@ -296,32 +303,32 @@ REM Set the build environment for VC9 DevEnv.exe and vcbuild.exe, but
 REM target backward-compatible 64-bit x64 (W2K3 x64 and XP x64).
 REM
 REM Uses the March 2006 Platform SDK cross-compiler 
-REM H:\mssdk06\bin\win64\x86\AMD64\cl.exe (version 14.00.40310) with
-REM the VC6 includes and mssdk06 libs.  The VC6 includes are updated
+REM H:\MSSDK06\bin\win64\x86\AMD64\cl.exe (version 14.00.40310) with
+REM the VC6 includes and MSSDK06 libs.  The VC6 includes are updated
 REM for 32/64-bit in \DDK\7100\.
 REM
-set WindowsSdkDir=H:\mssdk06\
-set WindowsSdkDir09=H:\mssdk09\
+set WindowsSdkDir06=H:\MSSDK06\
+set WindowsSdkDir=H:\MSSDK09\
 set VCLib=
 set AMD64=1
 set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework64\
 set VSInstallDir=H:\%VCName%\
 set VCInstallDir=%VSInstallDir%VC\
-set PATH=%WindowsSdkDir%bin;%FrameworkSDKDir%Bin;%WindowsSdkDir%bin\win64\x86\AMD64;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%PATH%
+set PATH=%WindowsSdkDir06%bin;%FrameworkSDKDir%Bin;%WindowsSdkDir06%bin\win64\x86\AMD64;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%PATH%
 rem Cannot use the VS200x compiler because it generates unref symbols
-rem set PATH=%WindowsSdkDir09%bin;%FrameworkSDKDir%Bin;%VCInstallDir%bin\x86_amd64;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%PATH%
+rem set PATH=%WindowsSdkDir%bin;%FrameworkSDKDir%Bin;%VCInstallDir%bin\x86_amd64;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%PATH%
 REM Use x64 versions of tools if running on x64
-if not "%ProgramFiles(x86)%"=="" set PATH=%WindowsSdkDir09%bin\X64;%PATH%
+if not "%ProgramFiles(x86)%"=="" set PATH=%WindowsSdkDir%bin\X64;%PATH%
 rem
-set LIB=H:\mssdk06\lib\amd64;%FrameworkSDKDir%lib\amd64;H:\mssdk06\lib\amd64\atlmfc
+set LIB=%WindowsSdkDir06%lib\amd64;%FrameworkSDKDir%lib\amd64;%WindowsSdkDir06%lib\amd64\atlmfc
 rem Cannot use the following - missing H:\DDK\7100\bin\amd64\msvcrtd.dll
-rem set LIB=%LIB%;%VCLib%;%WindowsSdkDir09%lib;%FrameworkSDKDir%lib;H:\DDK\7100\lib\crt\amd64;H:\DDK\7100\lib\atl\amd64;H:\DDK\7100\lib\mfc\amd64
+rem set LIB=%LIB%;%VCLib%;%WindowsSdkDir%lib;%FrameworkSDKDir%lib;H:\DDK\7100\lib\crt\amd64;H:\DDK\7100\lib\atl\amd64;H:\DDK\7100\lib\mfc\amd64
 set LIBPATH=%FrameworkDir%%FrameworkVersion%
-set INCLUDE=%WindowsSdkDir09%include;H:\mssdk06\include\mfc;H:\mssdk06\include\atl;H:\mssdk06\include\crt;%FrameworkSDKDir%include;%INCLUDE%
+set INCLUDE=%WindowsSdkDir%include;%WindowsSdkDir06%include\mfc;%WindowsSdkDir06%include\atl;%WindowsSdkDir06%include\crt;%FrameworkSDKDir%include;%INCLUDE%
 rem Cannot use the following
-rem set INCLUDE=E:\ae\atl30;%WindowsSdkDir09%include;H:\DDK\7100\inc\crt;H:\DDK\7100\inc\mfc42;H:\DDK\7100\inc\api\crt\stl60;%FrameworkSDKDir%include;%INCLUDE%
+rem set INCLUDE=E:\ae\atl30;%WindowsSdkDir%include;H:\DDK\7100\inc\crt;H:\DDK\7100\inc\mfc42;H:\DDK\7100\inc\api\crt\stl60;%FrameworkSDKDir%include;%INCLUDE%
 REM
-%REG32% ADD "HKLM\Software\Microsoft\VisualStudio\%VCVersion%" /v "Source Directories" /d "H:\mssdk06\src\crt\;H:\mssdk06\src\mfc\;H:\mssdk06\include\crt\;H:\mssdk06\include\mfc\;H:\mssdk06\include\atl\\" /f
+%REG32% ADD "HKLM\Software\Microsoft\VisualStudio\%VCVersion%" /v "Source Directories" /d "%WindowsSdkDir06%src\crt\;%WindowsSdkDir06%src\mfc\;%WindowsSdkDir06%include\crt\;%WindowsSdkDir06%include\mfc\;%WindowsSdkDir06%include\atl\\" /f
 if "%force%"=="yes" goto force_vc96x64
 cmp -s "%VCSettings%VCComponents_Alan_vc96.dat" "%VCSettings%VCComponents.dat"
 if %ERRORLEVEL% EQU 0 goto done
@@ -333,9 +340,9 @@ rem python "%HomeVCSettings%SpliceSettings.py" %1
 if not "%silent%"=="yes" echo Environment varibles set for %VCName%, target x64, with MSVCRT.DLL compiler and libs
 goto done
 rem --------------------------------------------------------------------------
-:vc10net
+:vc10net4
 REM
-REM Set the build environment for .NET 4 on x86 (vc10net)
+REM Set the build environment for .NET 4 on x86 (vc10net4)
 REM
 set VCSettings=%VC10Settings%
 set HomeVCSettings=%HomeVC10Settings%
@@ -351,7 +358,8 @@ set FrameworkVersion64=
 set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework\
 set FrameworkDir32=%SystemRoot%\Microsoft.NET\Framework\
 set FrameworkDir64=
-set WindowsSdkDir=C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\
+rem set WindowsSdkDir=C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\
+set WindowsSdkDir=H:\MSSDK10\
 set VSInstallDir=H:\%VCName%\
 set VCInstallDir=%VSInstallDir%VC\
 set DevEnvDir=%VSInstallDir%Common7\IDE\
@@ -365,17 +373,17 @@ set LIBPATH=%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%;
 set INCLUDE=%INCLUDE%;%WindowsSdkDir%include;%VCInstallDir%include;%VCInstallDir%atlmfc\include
 REM
 %REG32% ADD "HKLM\Software\Microsoft\VisualStudio\%VCVersion%" /v "Source Directories" /d "%VCInstallDir%crt\src\;%VCInstallDir%atlmfc\src\mfc\;%VCInstallDir%atlmfc\src\mfcm\;%VCInstallDir%atlmfc\src\atl\;%VCInstallDir%atlmfc\include\\" /f
-if "%force%"=="yes" goto force_vc10net
-cmp -s "%VCSettings%Microsoft.Cpp.Win32.user_Alan_vc10Net.props" "%VCSettings%Microsoft.Cpp.Win32.user.props"
+if "%force%"=="yes" goto force_vc10net4
+cmp -s "%VCSettings%Microsoft.Cpp.Win32.user_Alan_vc10Net4.props" "%VCSettings%Microsoft.Cpp.Win32.user.props"
 if %ERRORLEVEL% EQU 0 goto done
-:force_vc10net
-cp "%VCSettings%Microsoft.Cpp.Win32.user_Alan_vc10Net.props" "%VCSettings%Microsoft.Cpp.Win32.user.props"
+:force_vc10net4
+cp "%VCSettings%Microsoft.Cpp.Win32.user_Alan_vc10Net4.props" "%VCSettings%Microsoft.Cpp.Win32.user.props"
 if not "%silent%"=="yes" echo Environment varibles set for %VCName% .NET 4, target x86.
 goto done
 rem --------------------------------------------------------------------------
-:vc10netx64
+:vc10net4x64
 REM
-REM Set the build environment for .NET 4 on x64 (vc10netx64)
+REM Set the build environment for .NET 4 on x64 (vc10net4x64)
 REM
 set VCSettings=%VC10Settings%
 set HomeVCSettings=%HomeVC10Settings%
@@ -390,7 +398,8 @@ set FrameworkVersion64=v4.0.30319
 set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework64\
 set FrameworkDir32=
 set FrameworkDir64=%SystemRoot%\Microsoft.NET\Framework64\
-set WindowsSdkDir=C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\
+rem set WindowsSdkDir=C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\
+set WindowsSdkDir=H:\MSSDK10\
 set VSInstallDir=H:\%VCName%\
 set VCInstallDir=%VSInstallDir%VC\
 set DevEnvDir=%VSInstallDir%Common7\IDE\
@@ -402,12 +411,91 @@ set LIBPATH=%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%;
 set INCLUDE=%INCLUDE%;%WindowsSdkDir%include;%VCInstallDir%include;%VCInstallDir%atlmfc\include
 REM
 %REG32% ADD "HKLM\Software\Microsoft\VisualStudio\%VCVersion%" /v "Source Directories" /d "%VCInstallDir%crt\src\;%VCInstallDir%atlmfc\src\mfc\;%VCInstallDir%atlmfc\src\mfcm\;%VCInstallDir%atlmfc\src\atl\;%VCInstallDir%atlmfc\include\\" /f
-if "%force%"=="yes" goto force_vc10netx64
-cmp -s "%VCSettings%Microsoft.Cpp.x64.user_Alan_vc10Net.props" "%VCSettings%Microsoft.Cpp.x64.user.props"
+if "%force%"=="yes" goto force_vc10net4x64
+cmp -s "%VCSettings%Microsoft.Cpp.x64.user_Alan_vc10Net4.props" "%VCSettings%Microsoft.Cpp.x64.user.props"
 if %ERRORLEVEL% EQU 0 goto done
-:force_vc10netx64
-cp "%VCSettings%Microsoft.Cpp.x64.user_Alan_vc10Net.props" "%VCSettings%Microsoft.Cpp.x64.user.props"
+:force_vc10net4x64
+cp "%VCSettings%Microsoft.Cpp.x64.user_Alan_vc10Net4.props" "%VCSettings%Microsoft.Cpp.x64.user.props"
 if not "%silent%"=="yes" echo Environment varibles set for %VCName% .NET 4, target x64.
+goto done
+rem --------------------------------------------------------------------------
+:vc10net35
+REM
+REM Set the build environment for .NET 3.5 on x86 (vc10net35)
+REM
+set VCSettings=%VC10Settings%
+set HomeVCSettings=%HomeVC10Settings%
+set VCName=VS2010
+set VCVersion=10.0
+set VCLib=
+set AMD64=
+set Framework35Version=
+set FrameworkSDKDir=
+set FrameworkVersion=v3.5
+set FrameworkVersion32=v3.5
+set FrameworkVersion64=
+set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework\
+set FrameworkDir32=%SystemRoot%\Microsoft.NET\Framework\
+set FrameworkDir64=
+rem set WindowsSdkDir=C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\
+set WindowsSdkDir=H:\MSSDK10\
+set VSInstallDir=H:\%VCName%\
+set VCInstallDir=%VSInstallDir%VC\
+set DevEnvDir=%VSInstallDir%Common7\IDE\
+rem
+set PATH=%VSInstallDir%VSTSDB\Deploy;%DevEnvDir%;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%FrameworkDir%%FrameworkVersion%;%VCInstallDir%VCPackages;%VSInstallDir%Team Tools\Performance Tools;%WindowsSdkDir%bin;%PATH%
+REM Use x64 versions of tools if running on x64
+REM BUG: The MSBUILD4 Tracker requires x86, else TRK0002 error.
+rem if not "%ProgramFiles(x86)%"=="" set PATH=%WindowsSdkDir%bin\x64;%PATH%
+set LIB=%LIB%;%WindowsSdkDir%lib;%VCInstallDir%lib;%VCInstallDir%atlmfc\lib
+set LIBPATH=%FrameworkDir%%FrameworkVersion%;%VCInstallDir%lib;%VCInstallDir%atlmfc\lib
+set INCLUDE=%INCLUDE%;%WindowsSdkDir%include;%VCInstallDir%include;%VCInstallDir%atlmfc\include
+REM
+%REG32% ADD "HKLM\Software\Microsoft\VisualStudio\%VCVersion%" /v "Source Directories" /d "%VCInstallDir%crt\src\;%VCInstallDir%atlmfc\src\mfc\;%VCInstallDir%atlmfc\src\mfcm\;%VCInstallDir%atlmfc\src\atl\;%VCInstallDir%atlmfc\include\\" /f
+if "%force%"=="yes" goto force_vc10net35
+cmp -s "%VCSettings%Microsoft.Cpp.Win32.user_Alan_vc10Net35.props" "%VCSettings%Microsoft.Cpp.Win32.user.props"
+if %ERRORLEVEL% EQU 0 goto done
+:force_vc10net35
+cp "%VCSettings%Microsoft.Cpp.Win32.user_Alan_vc10Net35.props" "%VCSettings%Microsoft.Cpp.Win32.user.props"
+if not "%silent%"=="yes" echo Environment varibles set for %VCName% .NET 3.5, target x86.
+goto done
+rem --------------------------------------------------------------------------
+:vc10net35x64
+REM
+REM Set the build environment for .NET 3.5 on x64 (vc10net35x64)
+REM
+set VCSettings=%VC10Settings%
+set HomeVCSettings=%HomeVC10Settings%
+set VCName=VS2010
+set VCVersion=10.0
+set VCLib=
+set Framework35Version=
+set FrameworkSDKDir=
+set FrameworkVersion=v3.5
+set FrameworkVersion32=
+set FrameworkVersion64=v3.5
+set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework64\
+set FrameworkDir32=
+set FrameworkDir64=%SystemRoot%\Microsoft.NET\Framework64\
+rem set WindowsSdkDir=C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\
+set WindowsSdkDir=H:\MSSDK10\
+set VSInstallDir=H:\%VCName%\
+set VCInstallDir=%VSInstallDir%VC\
+set DevEnvDir=%VSInstallDir%Common7\IDE\
+set Platform=X64
+rem
+set PATH=%VCInstallDir%bin\amd64;%VSInstallDir%VSTSDB\Deploy;%DevEnvDir%;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%FrameworkDir%%FrameworkVersion%;%VCInstallDir%VCPackages;%VSInstallDir%Team Tools\Performance Tools\x64;%VSInstallDir%Team Tools\Performance Tools;%WindowsSdkDir%bin\x64;%WindowsSdkDir%bin;%PATH%
+set LIB=%LIB%;%WindowsSdkDir%lib\x64;%VCInstallDir%lib\amd64;%VCInstallDir%atlmfc\lib\amd64
+set LIBPATH=%FrameworkDir%%FrameworkVersion%;%VCInstallDir%lib\amd64;%VCInstallDir%atlmfc\lib\amd64
+set INCLUDE=%INCLUDE%;%WindowsSdkDir%include;%VCInstallDir%include;%VCInstallDir%atlmfc\include
+REM
+%REG32% ADD "HKLM\Software\Microsoft\VisualStudio\%VCVersion%" /v "Source Directories" /d "%VCInstallDir%crt\src\;%VCInstallDir%atlmfc\src\mfc\;%VCInstallDir%atlmfc\src\mfcm\;%VCInstallDir%atlmfc\src\atl\;%VCInstallDir%atlmfc\include\\" /f
+if "%force%"=="yes" goto force_vc10net35x64
+cmp -s "%VCSettings%Microsoft.Cpp.x64.user_Alan_vc10Net35.props" "%VCSettings%Microsoft.Cpp.x64.user.props"
+if %ERRORLEVEL% EQU 0 goto done
+:force_vc10net4x64
+cp "%VCSettings%Microsoft.Cpp.x64.user_Alan_vc10Net35.props" "%VCSettings%Microsoft.Cpp.x64.user.props"
+if not "%silent%"=="yes" echo Environment varibles set for %VCName% .NET 3.5, target x64.
 goto done
 rem --------------------------------------------------------------------------
 :vc10
@@ -428,16 +516,15 @@ set FrameworkVersion64=
 set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework\
 set FrameworkDir32=%SystemRoot%\Microsoft.NET\Framework\
 set FrameworkDir64=
-set WindowsSdkDir=H:\mssdk09\
-set WindowsSdkDirVC10=C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\
+set WindowsSdkDir=H:\MSSDK10\
 set VSInstallDir=H:\%VCName%\
 set VCInstallDir=%VSInstallDir%VC\
 set DevEnvDir=%VSInstallDir%Common7\IDE\
 rem
-set PATH=%VSInstallDir%VSTSDB\Deploy;%DevEnvDir%;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%;%VCInstallDir%VCPackages;%VSInstallDir%Team Tools\Performance Tools;%WindowsSdkDirVC10%bin\NETFX 4.0 Tools;%WindowsSdkDir%bin;%PATH%
+set PATH=%VSInstallDir%VSTSDB\Deploy;%DevEnvDir%;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%;%VCInstallDir%VCPackages;%VSInstallDir%Team Tools\Performance Tools;%WindowsSdkDir%bin\NETFX 4.0 Tools;%WindowsSdkDir%bin;%PATH%
 REM Use x64 versions of tools if running on x64
 REM BUG: The MSBUILD4 Tracker requires x86, else TRK0002 error.
-rem if not "%ProgramFiles(x86)%"=="" set PATH=%WindowsSdkDir%bin\x64;%WindowsSdkDirVC10%bin\NETFX 4.0 Tools\x64;%PATH%
+rem if not "%ProgramFiles(x86)%"=="" set PATH=%WindowsSdkDir%bin\x64;%WindowsSdkDir%bin\NETFX 4.0 Tools\x64;%PATH%
 set LIB=%LIB%;%WindowsSdkDir%lib;%VCInstallDir%lib;%VCInstallDir%atlmfc\lib
 set LIBPATH=%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%;%VCInstallDir%lib;%VCInstallDir%atlmfc\lib
 set INCLUDE=%INCLUDE%;%WindowsSdkDir%include;%VCInstallDir%include;%VCInstallDir%atlmfc\include
@@ -448,6 +535,10 @@ cmp -s "%VCSettings%Microsoft.Cpp.Win32.user_Alan_vc10.props" "%VCSettings%Micro
 if %ERRORLEVEL% EQU 0 goto done
 :force_vc10
 cp "%VCSettings%Microsoft.Cpp.Win32.user_Alan_vc10.props" "%VCSettings%Microsoft.Cpp.Win32.user.props"
+rem BUG: Race condition causes Exit to occur before /ResetSettings
+rem start /wait devenv.exe /ResetSettings "%HomeVCSettings%Alan_vc10.vssettings" /Command Exit
+rem python "%HomeVCSettings%SpliceSettings.py" %1
+rem See C:\lbin\OLD\SpliceSettings.py -- Good example of XML parsing in Python
 if not "%silent%"=="yes" echo Environment varibles set for %VCName%, target x86.
 goto done
 rem --------------------------------------------------------------------------
@@ -468,14 +559,13 @@ set FrameworkVersion64=v4.0.30319
 set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework64\
 set FrameworkDir32=
 set FrameworkDir64=%SystemRoot%\Microsoft.NET\Framework64\
-set WindowsSdkDir=H:\mssdk09\
-set WindowsSdkDirVC10=C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\
+set WindowsSdkDir=H:\MSSDK10\
 set VSInstallDir=H:\%VCName%\
 set VCInstallDir=%VSInstallDir%VC\
 set DevEnvDir=%VSInstallDir%Common7\IDE\
 set Platform=X64
 rem
-set PATH=%VCInstallDir%bin\amd64;%VSInstallDir%VSTSDB\Deploy;%DevEnvDir%;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%;%VCInstallDir%VCPackages;%VSInstallDir%Team Tools\Performance Tools\x64;%VSInstallDir%Team Tools\Performance Tools;%WindowsSdkDirVC10%bin\NETFX 4.0 Tools\x64;%WindowsSdkDir%bin\x64;%WindowsSdkDir%bin;%PATH%
+set PATH=%VCInstallDir%bin\amd64;%VSInstallDir%VSTSDB\Deploy;%DevEnvDir%;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%;%VCInstallDir%VCPackages;%VSInstallDir%Team Tools\Performance Tools\x64;%VSInstallDir%Team Tools\Performance Tools;%WindowsSdkDir%bin\NETFX 4.0 Tools\x64;%WindowsSdkDir%bin\x64;%WindowsSdkDir%bin;%PATH%
 set LIB=%LIB%;%WindowsSdkDir%lib\x64;%VCInstallDir%lib\amd64;%VCInstallDir%atlmfc\lib\amd64
 set LIBPATH=%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%;%VCInstallDir%lib\amd64;%VCInstallDir%atlmfc\lib\amd64
 set INCLUDE=%INCLUDE%;%WindowsSdkDir%include;%VCInstallDir%include;%VCInstallDir%atlmfc\include
@@ -495,9 +585,12 @@ REM Set the build environment for VC10 DevEnv.exe and msbuild.exe, but
 REM target backward-compatible 64-bit x64 (W2K3 x64 and XP x64).
 REM
 REM Uses the March 2006 Platform SDK cross-compiler 
-REM H:\mssdk06\bin\win64\x86\AMD64\cl.exe (version 14.00.40310) with
-REM the VC6 includes and mssdk06 libs.  The VC6 includes are updated
-REM for 32/64-bit in \DDK\7100\.
+REM H:\MSSDK06\bin\win64\x86\AMD64\cl.exe (version 14.00.40310) with
+REM the VC6 includes and MSSDK06 libs.
+REM
+REM The VC6 includes are updated for 32/64-bit in \DDK\7100\.
+REM We use H:\MSSDK10 includes because they still work.  When a newer SDK fails
+REM fall back to \DDK\7100 includes (might need work).
 REM
 set VCSettings=%VC10Settings%
 set HomeVCSettings=%HomeVC10Settings%
@@ -512,29 +605,29 @@ set FrameworkVersion64=v4.0.30319
 set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework\
 set FrameworkDir32=%SystemRoot%\Microsoft.NET\Framework\
 set FrameworkDir64=
-set WindowsSdkDir=H:\mssdk06\
-rem We want to use \MSSDK09 to pick up Vista/Win7 Includes.
-set WindowsSdkDir09=H:\mssdk09\
+set WindowsSdkDir06=H:\MSSDK06\
+rem We want to use \MSSDK10 to pick up Vista/Win7 Includes.
+set WindowsSdkDir=H:\MSSDK10\
 set VSInstallDir=H:\%VCName%\
 set VCInstallDir=%VSInstallDir%VC\
 set DevEnvDir=%VSInstallDir%Common7\IDE\
 set Platform=X64
-set PATH=%WindowsSdkDir%bin;%WindowsSdkDir%bin\win64\x86\AMD64;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%DevEnvDir%;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%;%PATH%
-REM BUG: mssdk06 does not have a native x64 compiler. MSBuild4 requires
+set PATH=%WindowsSdkDir06%bin;%WindowsSdkDir06%bin\win64\x86\AMD64;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%DevEnvDir%;%VCInstallDir%vcpackages;%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%;%PATH%
+REM BUG: MSSDK06 does not have a native x64 compiler. MSBuild4 requires
 REM that all tools be consistently 32-bit or consistently 64-bit.
-REM if not "%ProgramFiles(x86)%"=="" set PATH=%WindowsSdkDir09%bin\X64;%PATH%
+REM if not "%ProgramFiles(x86)%"=="" set PATH=%WindowsSdkDir%bin\X64;%PATH%
 rem Cannot use the VS2010 x64 compiler because it generates unref symbols.
-rem set PATH=%WindowsSdkDir09%bin;%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%;%VCInstallDir%bin\amd64;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%PATH%
+rem set PATH=%WindowsSdkDir%bin;%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%;%VCInstallDir%bin\amd64;%VCInstallDir%bin;%VSInstallDir%Common7\Tools;%VSInstallDir%Common7\IDE;%VCInstallDir%vcpackages;%PATH%
 rem
-set LIB=H:\mssdk06\lib\amd64;%;H:\mssdk06\lib\amd64\atlmfc
+set LIB=%WindowsSdkDir06%lib\amd64;%;%WindowsSdkDir06%lib\amd64\atlmfc
 rem Cannot use the following - missing H:\DDK\7100\bin\amd64\msvcrtd.dll
-rem set LIB=%LIB%;%VCLib%;%WindowsSdkDir09%lib;%FrameworkSDKDir%lib;H:\DDK\7100\lib\crt\amd64;H:\DDK\7100\lib\atl\amd64;H:\DDK\7100\lib\mfc\amd64
+rem set LIB=%LIB%;%VCLib%;%WindowsSdkDir%lib;%FrameworkSDKDir%lib;H:\DDK\7100\lib\crt\amd64;H:\DDK\7100\lib\atl\amd64;H:\DDK\7100\lib\mfc\amd64
 set LIBPATH=%FrameworkDir%%FrameworkVersion%;%FrameworkDir%%Framework35Version%
-set INCLUDE=%WindowsSdkDir09%include;H:\mssdk06\include\mfc;H:\mssdk06\include\atl;H:\mssdk06\include\crt;%INCLUDE%
+set INCLUDE=%WindowsSdkDir%include;%WindowsSdkDir06%include\mfc;%WindowsSdkDir06%include\atl;%WindowsSdkDir06%include\crt;%INCLUDE%
 rem Cannot use the following
-rem set INCLUDE=E:\ae\atl30;%WindowsSdkDir09%include;H:\DDK\7100\inc\crt;H:\DDK\7100\inc\mfc42;H:\DDK\7100\inc\api\crt\stl60;%INCLUDE%
+rem set INCLUDE=E:\ae\atl30;%WindowsSdkDir%include;H:\DDK\7100\inc\crt;H:\DDK\7100\inc\mfc42;H:\DDK\7100\inc\api\crt\stl60;%INCLUDE%
 REM
-%REG32% ADD "HKLM\Software\Microsoft\VisualStudio\%VCVersion%" /v "Source Directories" /d "H:\mssdk06\src\crt\;H:\mssdk06\src\mfc\;H:\mssdk06\include\crt\;H:\mssdk06\include\mfc\;H:\mssdk06\include\atl\\" /f
+%REG32% ADD "HKLM\Software\Microsoft\VisualStudio\%VCVersion%" /v "Source Directories" /d "%WindowsSdkDir06%src\crt\;%WindowsSdkDir06%src\mfc\;%WindowsSdkDir06%include\crt\;%WindowsSdkDir06%include\mfc\;%WindowsSdkDir06%include\atl\\" /f
 if "%force%"=="yes" goto force_vc106x64
 cmp -s "%VCSettings%Microsoft.Cpp.x64.user_Alan_vc106.props" "%VCSettings%Microsoft.Cpp.x64.user.props"
 if %ERRORLEVEL% EQU 0 goto done
@@ -584,7 +677,7 @@ set HomeVC8Settings=
 set HomeVC9Settings=
 set HomeVC10Settings=
 set HomeVCSettings=
-set WindowsSdkDirVC10=
+set WindowsSdkDir06=
 set VCName=
 set VCVersion=
 set VCLib=
