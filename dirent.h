@@ -2,11 +2,11 @@
 //
 // opendir/readdir/stat translation layer for WIN32
 //
-// Copyright (c) 2004, Algin Technology LLC
+// Copyright (c) 2004-2015, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: dirent.h,v 1.8 2007/12/12 06:41:26 cvsalan Exp $
+// $Id: dirent.h,v 1.11 2015/05/09 08:48:26 cvsalan Exp $
 //
 
 //
@@ -217,6 +217,7 @@ extern int _xreadlink(struct xstat *, char *, int);
 #undef lstat
 #define lstat xlstat
 
+void PreFilterPath(char* szPath/*inout*/);
 
 //
 // Map and assign the Win32 GetLastError() return value to POSIX errno

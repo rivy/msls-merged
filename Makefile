@@ -4,10 +4,10 @@
 #
 # Based on GNU FileUtils 4.1
 # 
-# Windows Extensions copyright (c) 2011, Algin Technology LLC
+# Windows Extensions copyright (c) 2010-2015, U-Tools Software LLC
 # Distributed under GNU General Public License version 2.
 #
-# $Id: Makefile,v 1.14 2011/01/27 22:19:56 cvsalan Exp $
+# $Id: Makefile,v 1.18 2015/05/11 20:37:24 cvsalan Exp $
 #
 
 
@@ -51,10 +51,10 @@
 #
 
 #
-# Compiling with Visual Studio 2005/2008/2010 C++ 
-# -----------------------------------------------
+# Compiling with Visual Studio 2005/2008/2010/2013 C++ 
+# ----------------------------------------------------
 #
-# Alternately you can use the Visual Studio 2005/2008/2010 C++ compiler.
+# Alternately you can use the Visual Studio 2005/2008/2010/2013 C++ compiler.
 # It uses the Windows Software Development Kit Update for Windows Vista,
 # dated February 2007 ("MSSDK07").
 #
@@ -72,22 +72,24 @@
 # __alloca_probe_16.obj, __aulldvrm.obj, and __ftol2.obj.
 # Use lib.exe to extract them from VS2005/8's MSVCRT.LIB.
 # 
-# To compile with VS2005/8 comment-out USE_VS6 below.  Also change
-# "SETBUILD.CMD vc6" to "SETBUILD.CMD vc86" (or vc96) in BUILD.CMD.
+# To compile with VS2005/2008/2010/2013 comment-out USE_VS6 below.  Also
+# change "SETBUILD.CMD vc6" in BUILD.CMD as follows:
 #
 # setbuild vc6 --> Use VS6 compiler + VS6 libs
 # setbuild vc86 --> Use VS2005 compiler (VC8) + VS6 libs
 # setbuild vc8 --> Use VS2005 compiler (VC8) + VS2005 libs (MSVCR80.DLL)
 # setbuild vc96 --> Use VS2008 compiler (VC9) + VS6 libs
 # setbuild vc9 --> Use VS2008 compiler (VC9) + VS2008 libs (MSVCR90.DLL)
+# setbuild vc106 --> Use VS2010 compiler (VC10) + VS6 libs
 # setbuild vc10 --> Use VS2010 compiler (VC10) + VS2010 libs (MSVCR100.DLL)
+# setbuild vc12 --> Use VS2013 compiler (VC12) + VS2012 libs (MSVCR120.DLL)
 #
-# Visual Studio 2010 (VC10) cannot be used for Windows 2000 because it drops
-# support for Windows 2000 and other older operating systems (W9x, NT, XP SP1,
-# W2K3 SP0).
+# Apps compiled with Visual Studio 2010 (VC10) or later will not run on
+# Windows 2000 because VC10 dropped support for Windows 2000.  Ditto W9x,
+# NT, XP SP1, and W2K3 SP0.
 #
-# WARNING: The linker (link.exe) in Visual Studio 2008/2010 (VC9/VC10)
-# will hardwire the .EXE header to Version 5 or 5.01.  This will prevent
+# WARNING: The linker (link.exe) in Visual Studio 2008/2010/2013 (VC9/VC10/VC12)
+# will hard-wire the .EXE header to Version 5 or 5.01.  This will prevent
 # execution on Windows 2000, Windows NT (Version 5.0)
 # or Windows 9x (Version 4).  To run on 2000/NT/Win9x you must build with
 # VS2005 or with VS6. 
@@ -123,9 +125,9 @@ CFG=msls - Win32 Debug
 !ENDIF 
 
 !IFDEF USE_VS6
-# VS2005/VS2008 root for the linker to use with VS6
-#VISUAL_STUDIO_2005_ROOT=C:\Program Files\Microsoft Visual Studio 2005
-VISUAL_STUDIO_2005_ROOT=H:\VS2005
+# VS2005/VS2008/VS2010/VS2013 root for the linker to use with VS6
+#VISUAL_STUDIO_20XX_ROOT=C:\Program Files\Microsoft Visual Studio 2005
+VISUAL_STUDIO_20XX_ROOT=E:\VS2013
 !ENDIF
 
 CPP=cl
@@ -141,12 +143,12 @@ LD=link.exe
 
 !IF "$(CFG)" == "msls - Win32 Debug"
 !IFDEF USE_VS6
-# Specify path to mspdb80.dll for VS2005/VS2008 link.exe
-PATH=$(PATH);$(VISUAL_STUDIO_2005_ROOT)\Common7\IDE
-# Need VS2005 delayimp.lib for MSSDK0x
-DELAYIMPLIB=$(VISUAL_STUDIO_2005_ROOT)\VC\lib\delayimp.lib
-# Need VS2005 linker for MSSDK0x libs
-LD=$(VISUAL_STUDIO_2005_ROOT)\VC\bin\link.exe
+# Specify path to mspdbXX.dll for VS2005/VS2008/VS2010/VS2013 link.exe
+PATH=$(PATH);$(VISUAL_STUDIO_20XX_ROOT)\Common7\IDE
+# Need VS20XX delayimp.lib for MSSDK0x
+DELAYIMPLIB=$(VISUAL_STUDIO_20XX_ROOT)\VC\lib\delayimp.lib
+# Need VS20XX linker for MSSDK0x libs
+LD=$(VISUAL_STUDIO_20XX_ROOT)\VC\bin\link.exe
 !ENDIF
 !ENDIF
 
@@ -174,7 +176,8 @@ CFLAGS=$(COPTS) \
 RSC_PROJ=/l 0x409 /d _DEBUG /fo"$(INTDIR)\ls.res"
 
 !IFDEF USE_VS6
-LDOPTS=/opt:nowin98 /subsystem:console
+#LDOPTS=/opt:nowin98 /subsystem:console
+LDOPTS=/subsystem:console
 !ELSE
 #
 # BUG: The Visual C++ 2008 (VC9) linker inserts version 5.0 into the 
@@ -190,7 +193,8 @@ LDOPTS=/opt:nowin98 /subsystem:console
 #
 # This prevents msls from running on Win9x or NT if linked with VC9.
 #
-LDOPTS=/opt:nowin98 /version:4.00 /subsystem:console,4.00
+#LDOPTS=/opt:nowin98 /version:4.00 /subsystem:console,4.00
+LDOPTS=/version:4.00 /subsystem:console,4.00
 !ENDIF
 
 LDFLAGS=$(LIBS) /nologo /incremental:no /base:"0x20000000" \
@@ -218,7 +222,8 @@ CFLAGS=$(COPTS) \
 RSC_PROJ=/l 0x409 /d NDEBUG /fo"$(INTDIR)\ls.res"
 
 !IFDEF USE_VS6
-LDOPTS=/opt:ref,icf,nowin98 /subsystem:console
+#LDOPTS=/opt:ref,icf,nowin98 /subsystem:console
+LDOPTS=/opt:ref,icf /subsystem:console
 !ELSE
 LDOPTS=/opt:ref,icf,nowin98 /version:4.00 /subsystem:console,4.00
 !ENDIF
@@ -296,8 +301,8 @@ clean:
 "$(INTDIR)" :
 	if not exist "$(INTDIR)/$(NULL)" mkdir "$(INTDIR)"
 
-.c{$(INTDIR)}.obj::
+.c{$(INTDIR)}.obj:
 	$(CPP) $(CFLAGS) $<
 
-.cpp{$(INTDIR)}.obj::
+.cpp{$(INTDIR)}.obj:
 	$(CPP) $(CFLAGS) $<

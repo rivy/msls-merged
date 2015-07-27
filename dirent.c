@@ -2,11 +2,11 @@
 //
 // opendir/readdir/stat translation layer for WIN32 - with caching
 //
-// Copyright (c) 2007, Algin Technology LLC
+// Copyright (c) 2007-2015, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: dirent.c,v 1.12 2008/08/28 22:44:32 cvsalan Exp $
+// $Id: dirent.c,v 1.15 2015/05/09 08:48:26 cvsalan Exp $
 //
 
 //
@@ -1468,8 +1468,7 @@ _follow_symlink(struct cache_entry *ce)
 	// Squirrel away the absolute path for security.cpp
 	//
 
-	// BUG? should be symce->ce_abspath = xstrdup(szPath); ??
-	ce->ce_abspath = xstrdup(szPath);
+	symce->ce_abspath = xstrdup(szPath);
 
 	if (gbReg) {
 		return symce; // done 

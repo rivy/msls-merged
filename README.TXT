@@ -14,7 +14,7 @@ Set the LS_OPTIONS environment variable in Control Panel -> System
    -bhAC --more --color=auto --recent --streams
 
 For documentation view msls.htm in your web browser.
-For updates go to http://utools.com/msls.asp.
+For updates go to https://u-tools.com/msls.asp.
 Send feedback and bug reports to msls@algintech.com.
 
 Also included is the native Windows version of the `grep' text search 
@@ -25,6 +25,6 @@ Use the environment variable GREP_OPTIONS:
 
 `ls' is updated whenever Microsoft releases a new versions of of Windows.
 Get the latest version from
-     http://utools.com/download.asp
+     https://u-tools.com/download.asp
 
-Alan Klietz, January 2011
+Alan Klietz, April 2015

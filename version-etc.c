@@ -17,7 +17,7 @@
 
 /* Written by Jim Meyering. */
 
-/* $Id: version-etc.c,v 1.2 2010/05/14 02:34:55 cvsalan Exp $ */
+/* $Id: version-etc.c,v 1.4 2015/05/09 08:48:26 cvsalan Exp $ */
 
 #if HAVE_CONFIG_H
 # include <config.h>
@@ -38,7 +38,7 @@
 
 char* version_etc_copyright =
   N_("Copyright (C) 2001 Free Software Foundation, Inc.\n\n\
-Microsoft Windows extensions copyright (C) 2010, Algin Technology LLC\n\
+Microsoft Windows extensions copyright (C) 2004-2015, U-Tools Software LLC\n\
 Distributed under GNU General Public License version 2.\n");
 
 

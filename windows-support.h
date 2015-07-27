@@ -1,11 +1,11 @@
 //
 // Support routines for MS Windows and NTFS
 //
-// Copyright (c) 2004, Algin Technology LLC
+// Copyright (c) 2004-2015, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: windows-support.h,v 1.8 2010/05/14 02:34:55 cvsalan Exp $
+// $Id: windows-support.h,v 1.11 2015/05/09 08:48:26 cvsalan Exp $
 //
 
 #ifdef NEED_DIRENT_H
@@ -52,6 +52,8 @@ _to_unsigned_int64(DWORD dwLowPart, DWORD dwHighPart);
 // pfn = A *static* pointer-to-function-pointer
 typedef int (WINAPI *PFN)();
 typedef PFN *PPFN;
+
+#define LOAD_FAIL ((PFN)0xFFFFFFFF) // bad-pfn marker
 
 extern BOOL 
 DynaLoad(LPSTR szDll, LPSTR szProc, PPFN ppfn/*inout*/);
@@ -112,7 +114,7 @@ time_t ConvertFileTimeToTimeT(PFILETIME pft);
 ///////////////////////////////////////////////////////////////////////////
 //
 // C++ support.  Needed mainly for hash templates taken from the
-// Algin proprietary AELIB.DLL
+// U-Tools proprietary AELIB.DLL
 //
 #ifdef __cplusplus
 

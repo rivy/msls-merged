@@ -1,4 +1,4 @@
-/* $Id: ls.h,v 1.7 2010/05/14 02:34:55 cvsalan Exp $ */
+/* $Id: ls.h,v 1.8 2014/09/06 22:47:12 cvsalan Exp $ */
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,7 +69,7 @@ extern SIDS_FORMAT gids_format; // AEK
 
 enum acls_format
 {
- acls_none=0, acls_short, acls_long, acls_very_long
+ acls_none=0, acls_short, acls_long, acls_very_long, acls_exhaustive
 };
 typedef enum acls_format ACLS_FORMAT, *PACLS_FORMAT;
 

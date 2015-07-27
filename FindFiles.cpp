@@ -1,11 +1,11 @@
 //////////////////////////////////////////////////////////////////////////
 //
 //
-// Copyright (c) 2007, Algin Technology LLC
+// Copyright (c) 2007-2015, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: FindFiles.cpp,v 1.5 2008/08/28 22:44:31 cvsalan Exp $
+// $Id: FindFiles.cpp,v 1.7 2015/05/09 08:48:26 cvsalan Exp $
 //
 
 // _aefindfirsti64() and _aefindnexti64()

@@ -7,11 +7,11 @@
 //
 // Used by stat()
 //
-// Copyright (c) 2004, Algin Technology LLC
+// Copyright (c) 2004-2015, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: Reparse.c,v 1.6 2010/05/14 02:34:55 cvsalan Exp $
+// $Id: Reparse.c,v 1.8 2015/05/09 08:49:57 cvsalan Exp $
 //
 
 #pragma warning(disable: 4305)  // truncated cast ok basetsd.h POINTER_64 - AEK

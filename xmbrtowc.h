@@ -2,11 +2,11 @@
 //
 // Implementation of _mbrtowc()
 //
-// Copyright (c) 2004, Algin Technology LLC
+// Copyright (c) 2004-2015, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: xmbrtowc.h,v 1.2 2007/10/05 00:48:19 cvsalan Exp $
+// $Id: xmbrtowc.h,v 1.7 2015/05/11 20:37:24 cvsalan Exp $
 //
 
 #ifdef __cplusplus
@@ -30,6 +30,18 @@ extern int mbsinit(const mbstate_t *mbs);
 // Return the current effective codepage
 //
 extern int get_codepage();
+
+//
+// Set the codepage for console output
+//
+void SetConsoleCodePage(int cp);
+void RestoreConsoleCodePage(); // called at exit
+void SetCodePage(int bAnsi);
+
+//
+// Return non-zero if the console is using a TrueType (TT) font
+//
+int IsConsoleFontTrueType();
 
 #ifdef __cplusplus
 }

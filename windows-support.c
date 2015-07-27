@@ -2,11 +2,11 @@
 //
 // Microsoft Windows support functions
 //
-// Copyright (c) 2004, Algin Technology LLC
+// Copyright (c) 2004-2015, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: windows-support.c,v 1.4 2010/05/14 02:34:55 cvsalan Exp $
+// $Id: windows-support.c,v 1.7 2015/05/09 08:48:26 cvsalan Exp $
 //
 
 #pragma warning(disable: 4305)  // truncated cast ok basetsd.h POINTER_64 - AEK
@@ -110,8 +110,6 @@ _to_unsigned_int64(DWORD dwLowPart, DWORD dwHighPart)
 }
 
 //////////////////////////////////////////////////////////////////////////
-
-#define LOAD_FAIL ((PFN)0xFFFFFFFF) // bad-pfn marker
 
 //
 // Dynamically load a DLL function.

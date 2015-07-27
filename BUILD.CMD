@@ -1,18 +1,20 @@
 @echo off
 setlocal
+set PACKAGE=msls
+rem
 REM
 REM BUILD.CMD - Build and install msls
 REM
-REM $Id: BUILD.CMD,v 1.8 2010/05/14 02:34:55 cvsalan Exp $
+REM $Id: BUILD.CMD,v 1.11 2014/09/06 23:02:47 cvsalan Exp $
 REM
 choice /C DR /N /M "[D]ebug or [R]elease? "
 if errorlevel 2 set BLDTYPE=Release
 if errorlevel 1 set BLDTYPE=Debug
 call SETBUILD.CMD vc6
-nmake /nologo clean CFG="msls - Win32 %BLDTYPE%"
+nmake /nologo clean CFG="%PACKAGE% - Win32 %BLDTYPE%"
 if errorlevel 1 goto done
 if "%BLDTYPE%"=="Release" C:\Python32\python.exe BumpVersion.py
-nmake /nologo CFG="msls - Win32 %BLDTYPE%" 
+nmake /nologo CFG="%PACKAGE% - Win32 %BLDTYPE%" 
 if errorlevel 1 goto done
 cd dircolors
 nmake /nologo CFG="dircolors - Win32 %BLDTYPE%" 
@@ -35,15 +37,22 @@ rem
 rem
 choice /C YN /M "Build Distribution "
 if errorlevel 2 goto done
-rem
 rem The remainder of this file is for packaging the distribution
 rem and is not likely to be helpful to you
 rem
-set URL="http://utools.com/msls.asp"
+set URL="https://u-tools.com/msls.asp"
 rem
 rem Sign the .EXE with Authenticode Certificate
 rem
-signcode -spc c:\certcode11.spc -v c:\certcode11.pvk -n "ls for Windows" -a sha1 -i %URL% -t "http://timestamp.verisign.com/scripts/timestamp.dll" Release\ls.exe
+rem signcode -spc c:\crt\14\certcode14.spc -v c:\crt\14\certcode14.pvk -n "ls for Windows" -a sha1 -i %URL% -t "http://timestamp.verisign.com/scripts/timestamp.dll" Release\ls.exe
+SET SIGNTOOL=E:\MSSDK14\bin\x86\signtool.exe
+SET CERTCODEDIR=C:\crt\code14
+SET CERTCODEPFX=%CERTCODEDIR%\certcode.pfx
+SET CERTCODEAC=%CERTCODEDIR%\ThawtePrimaryRootUnderPremium.cer
+SET TITLE="ls for Windows"
+rem
+set /P PASSPHRASE=Enter the passphrase? 
+%SIGNTOOL% sign /v /f %CERTCODEPFX% /t "http://timestamp.verisign.com/scripts/timestamp.dll" /d %TITLE% /p %PASSPHRASE% /ac %CERTCODEAC% /du %URL% Release\ls.exe
 if errorlevel 1 goto done
 copy /Y Release\ls.exe c:\lbin\ls.exe
 rem
@@ -81,9 +90,9 @@ rem
 rm -rf DISTRIB_ZIP
 mkdir DISTRIB_ZIP
 cd DISTRIB_EXE
-zip.exe -9 -v -o -r ..\DISTRIB_ZIP\msls.zip *
+zip.exe -9 -v -o -r ..\DISTRIB_ZIP\%PACKAGE%.zip *
 cd ..\DISTRIB_SRC
-zip.exe -9 -v -o -r ..\DISTRIB_ZIP\msls_src.zip *
+zip.exe -9 -v -o -r ..\DISTRIB_ZIP\%PACKAGE%_src.zip *
 cd ..\DISTRIB_ZIP
 if NOT "%ProgramFiles(x86)%"=="" goto 64bit
 set WZIPSE="%ProgramFiles%\wzipse\winzipse.exe"
@@ -91,11 +100,12 @@ goto cont
 :64bit
 set WZIPSE="%ProgramFiles(x86)%\wzipse\winzipse.exe"
 :cont
-%WZIPSE% msls.zip @..\winzipse.inp
+%WZIPSE% %PACKAGE%.zip @..\winzipse.inp
 rem
 rem Sign the self-extracting .EXE with Authenticode Certificate
 rem
-signcode -spc c:\certcode11.spc -v c:\certcode11.pvk -n "ls for Windows" -a sha1 -i %URL% -t "http://timestamp.verisign.com/scripts/timestamp.dll" msls.exe
+rem signcode -spc c:\crt\certcode14.spc -v c:\crt\certcode14.pvk -n "ls for Windows" -a sha1 -i %URL% -t "http://timestamp.verisign.com/scripts/timestamp.dll" %PACKAGE%.exe
+%SIGNTOOL% sign /v /f %CERTCODEPFX% /t "http://timestamp.verisign.com/scripts/timestamp.dll" /d %TITLE% /p %PASSPHRASE% /ac %CERTCODEAC% /du %URL% %PACKAGE%.exe
 if errorlevel 1 goto done
 cd ..
 echo Build complete in DISTRIB_ZIP.

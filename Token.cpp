@@ -2,12 +2,12 @@
 //
 // Dump the process token
 //
-// Copyright (c) 2007, Algin Technology LLC
+// Copyright (c) 2007-2015, U-Tools Software LLC
 // Written by Alan Klietz 
 //
 // Distributed under GNU General Public License version 2.
 //
-// $Id: Token.cpp,v 1.6 2010/05/14 02:34:55 cvsalan Exp $
+// $Id: Token.cpp,v 1.9 2015/05/09 08:49:57 cvsalan Exp $
 //
 
 #define WIN32_LEAN_AND_MEAN
@@ -291,6 +291,10 @@ static int _DumpToken(HANDLE hToken, BOOL bRecurseOk)
 	pTokenGroups = (PTOKEN_GROUPS)Buffer;
 	more_printf("\nToken Groups:\n");
 	_DumpGroups(pTokenGroups);
+
+	if (::IsTokenRestricted(hToken)) {
+		more_printf("\nThe token is restricted.\n");
+	}
 
 	//
 	// Get restricted group SIDs (if any)

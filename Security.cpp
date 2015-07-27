@@ -2,11 +2,11 @@
 //
 // Security translation layer for WIN32
 //
-// Copyright (c) 2007, Algin Technology LLC
+// Copyright (c) 2007-2015, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: Security.cpp,v 1.19 2010/05/14 02:34:55 cvsalan Exp $
+// $Id: Security.cpp,v 1.23 2015/05/11 20:37:24 cvsalan Exp $
 //
 
 #define WIN32_LEAN_AND_MEAN
@@ -137,7 +137,7 @@ static DWORD gdwSdSerial = 1;  // next SD serial # to allocate
     S-1-0x206C277C6666-21-2127521184-1604012920-1887927527-19009
       ^ ^^^^^^^^^^^^^^ ^^ ^^^^^^^^^^ ^^^^^^^^^^ ^^^^^^^^^^ ^^^^^
       |       |        |      |          |          |        |
-      |   Hexidecimal  |      |          |          |        |
+      |   Hexadecimal  |      |          |          |        |
       +----------------+------+----------+----------+--------+--- Decimal
 
     This exposes the fact that the SID authority is technically 48 bits.
@@ -736,6 +736,9 @@ BOOL LookupSidName(PSID pSid, LPTSTR szBuf, DWORD dwBufLen,
 			szDomain[0] = '\0'; 
 		} else if (_stricmp(szDomain, "NT SERVICE") == 0) {
 			// e.g., NT SERVICE\Trusted Installer
+			szDomain[0] = '\0'; 
+		} else if (_stricmp(szDomain, "APPLICATION PACKAGE AUTHORITY") == 0) {
+			// WinRT app (The RID is typically ALL APPLICATION PACKAGES)
 			szDomain[0] = '\0'; 
 		}
 	}
@@ -1932,7 +1935,7 @@ extern "C"
 
 ///////////////////////////////////////////////////////////////////
 //
-// Show very-long-format ACL (acls_format == acls_very_long)
+// Show very-long-format ACL
 //
 
 static void
@@ -2256,10 +2259,12 @@ _print_very_long_acl(PSECURITY_DESCRIPTOR psd, BOOL bDirectory)
 {
 	SECURITY_DESCRIPTOR_CONTROL sdc;
 	DWORD dwRevision=0;
-	BOOL bPresent=0, bDefaulted=0;
-	PACL pDacl=NULL, pSacl=NULL;
+	BOOL bPresent, bDefaulted;
+	PACL pDacl, pSacl;
 	ULONG i;
 	PACCESS_ALLOWED_ACE pAce; // same as PACCESS_DENIED_ACE
+
+	BOOL bExhaustive = (acls_format == acls_exhaustive);
 
 #ifdef UNDEFINED // BUG: Broken - returns garbage for DACL and SACL
 	//
@@ -2281,25 +2286,40 @@ _print_very_long_acl(PSECURITY_DESCRIPTOR psd, BOOL bDirectory)
 	//
 	// Grovel for the DACL
 	//
+	pDacl = NULL; bPresent = 0; bDefaulted = 0; // required
 	if (!::GetSecurityDescriptorDacl(psd, &bPresent, &pDacl, &bDefaulted)) {
 		error(0, 0, "Unable to get DACL");
 		pDacl = NULL;
 	} else if (!bPresent || pDacl == NULL) {
 		pDacl = NULL;
-		more_puts("Missing DACL - allow all access.");
+		more_puts(" Missing DACL - allow all access.");
 	}
-	if (bDefaulted) {
-		more_puts("Missing DACL - using token default DACL.");
+	if (bExhaustive && !bPresent) {
+		more_puts(" DACL is not present.");
+	}
+	if (bExhaustive && bDefaulted) {
+		more_puts(" DACL was created from the user's default DACL.");
 	}
 
 	//
 	// Grovel for the SACL
 	//
+	pSacl = NULL; bPresent = 0; bDefaulted = 0; // required
 	if (!::GetSecurityDescriptorSacl(psd, &bPresent, &pSacl, &bDefaulted)) {
 		error(0, 0, "Unable to get SACL");
 		pSacl = NULL;
 	} else if (!bPresent || pSacl == NULL) {
 		pSacl = NULL;
+	}
+	if (bExhaustive) {
+		if (bPresent) {
+			more_puts(" SACL is present.");
+		} else {
+			more_puts(" SACL is not present.");
+		}
+	}
+	if (bExhaustive && bDefaulted) {
+		more_puts(" The SACL was created from the user's default SACL.");
 	}
 
 	//
@@ -2309,7 +2329,7 @@ _print_very_long_acl(PSECURITY_DESCRIPTOR psd, BOOL bDirectory)
 		if (pDacl != NULL && (sdc & SE_DACL_PROTECTED)) {
 			more_puts(" DACL protected from clobbering by parent.");
 		}
-		if (pSacl != NULL && (sdc & SE_SACL_PROTECTED)) {
+		if ((bExhaustive || pSacl != NULL) && (sdc & SE_SACL_PROTECTED)) {
 			more_puts(" SACL protected from clobbering by parent.");
 		}
 		if (pDacl != NULL && (sdc & (SE_DACL_PROTECTED|SE_DACL_AUTO_INHERITED)) == 0) {
@@ -2328,12 +2348,14 @@ _print_very_long_acl(PSECURITY_DESCRIPTOR psd, BOOL bDirectory)
 			//more_puts(" DACL protected from clobbering by parent (NT4 legacy).");
 			more_puts(" DACL is not inherited (but not protected).");
 		}
-		if (pSacl != NULL && (sdc & (SE_SACL_PROTECTED|SE_SACL_AUTO_INHERITED)) == 0) {
+		if ((bExhaustive || pSacl != NULL) && (sdc & (SE_SACL_PROTECTED|SE_SACL_AUTO_INHERITED)) == 0) {
 			//
 			// Rare: Neither Protected nor Auto_inherited.  Most likely
-			// this was created by NT4.
+			// this was created by NT4, or modified by the low-level API.
 			//
-			// NTMARTA.DLL will set SE_SACL_PROTECTED the first time it is used.
+			// NTMARTA.DLL will set SE_SACL_PROTECTED the first time it is used
+			// if the ACL contains only non-inherited ACEs.  This prevents
+			// any future inheritance.
 			//
 			// BUG: 
 			//	Many custom-created folders (outside of NTMARTA)
@@ -2345,10 +2367,20 @@ _print_very_long_acl(PSECURITY_DESCRIPTOR psd, BOOL bDirectory)
 			more_puts(" SACL is not inherited (but not protected).");
 		}
 		if (bDirectory) {
+			//
+			// Actually, SE_DACL_AUTO_INHERITED is merely an optimization
+			// that tells ::ConvertToAutoInheritPrivateObjectSecurity to
+			// do (mostly) nothing.
+			//
 			if (pDacl != NULL && (sdc & SE_DACL_AUTO_INHERITED)) {
 				more_puts(" Changes in DACL will propagate to existing descendants.");
 			}
-			if (pSacl != NULL && (sdc & SE_SACL_AUTO_INHERITED)) {
+			//
+			// Actually, SE_DACL_AUTO_INHERITED is merely an optimization
+			// that tells ::ConvertToAutoInheritPrivateObjectSecurity to
+			// do (mostly) nothing.
+			//
+			if ((bExhaustive || pSacl != NULL) && (sdc & SE_SACL_AUTO_INHERITED)) {
 				more_puts(" Changes in SACL will propagate to existing descendants.");
 			}
 		}
@@ -2366,9 +2398,7 @@ _print_very_long_acl(PSECURITY_DESCRIPTOR psd, BOOL bDirectory)
 		}
 		if (pSacl) {
 			pAce = (PACCESS_ALLOWED_ACE)(pSacl+1); // all file ACEs have same format
-			if (pSacl->AceCount != 0) {
-				more_puts("System Access Control List:");
-			}
+			more_puts("System Access Control List:");
 			for (i=0; i < pSacl->AceCount; ++i, pAce = (PACCESS_ALLOWED_ACE)((PBYTE)pAce+pAce->Header.AceSize)) {
 				_print_ace(pAce, bDirectory);
 				//if (i != pSacl->AceCount-1) more_putchar('\n');
@@ -2384,7 +2414,7 @@ _print_very_long_acl(PSECURITY_DESCRIPTOR psd, BOOL bDirectory)
 
 ///////////////////////////////////////////////////////////////////
 //
-// Show long-format ACL (acls_format == acls_long or acls_very_long)
+// Show long-format ACL
 //
 
 // Trivia: This is the longest name in the Win32 API.
@@ -2417,9 +2447,10 @@ print_long_acl(struct cache_entry *ce)
 	SetLastError(0);
 
 	//
-	// Bail if not --acls=long or --acls=very-long
+	// Bail if not --acls=long or --acls=very-long or --acls=exhaustive
 	//
-	if ((acls_format != acls_long && acls_format != acls_very_long)) {
+	if ((acls_format != acls_long && acls_format != acls_very_long
+			&& acls_format != acls_exhaustive)) {
 		return;
 	}
 
@@ -2437,7 +2468,7 @@ print_long_acl(struct cache_entry *ce)
 	//
 	PSECURITY_DESCRIPTOR psd = sd.GetSd();
 
-	if (acls_format == acls_very_long) {
+	if (acls_format == acls_very_long || acls_format == acls_exhaustive) {
 		_print_very_long_acl(psd, ((ce->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0));
 		return;
 	}
@@ -2785,11 +2816,17 @@ win32_mode_string(struct stat *st, char *szMode)
 	BOOL bPresent = FALSE, bDefaulted = FALSE;
 	DWORD dwBufferSize;
 	PACL pAcl;
-	ACCESS_MASK mask;
+	ACCESS_MASK mask, appMask;
 	PSID pGroupSid;
 	BOOL bBinaryExecutable;
 	UINT i;
 
+#ifndef SECURITY_APP_PACKAGE_AUTHORITY
+# define SECURITY_APP_PACKAGE_AUTHORITY	{0,0,0,0,0,15}
+# define SECURITY_BUILTIN_APP_PACKAGE_RID_COUNT	(2L)
+# define SECURITY_APP_PACKAGE_BASE_RID	(0x00000002L)
+# define SECURITY_BUILTIN_PACKAGE_ANY_PACKAGE	(0x00000001L)
+#endif
 	static HANDLE hToken; // cached
 	static BYTE UserBuffer[80]; // cached
 	static PSID pUserSid; // cached
@@ -2797,9 +2834,11 @@ win32_mode_string(struct stat *st, char *szMode)
 	static PTOKEN_GROUPS pTokenGroups; // cached
 	static SID_IDENTIFIER_AUTHORITY siaWorldAuthority = SECURITY_WORLD_SID_AUTHORITY;
 	static SID_IDENTIFIER_AUTHORITY siaNtAuthority = SECURITY_NT_AUTHORITY;
-	static PSID pSidEveryone, pSidUsers, pSidAuthenticatedUsers;
+	static SID_IDENTIFIER_AUTHORITY siaAppPackageAuthority = SECURITY_APP_PACKAGE_AUTHORITY;
+	static PSID pSidEveryone, pSidUsers, pSidAuthenticatedUsers, pSidAllApplicationPackages;
 	static BYTE SidEveryoneBuffer[32], SidUsersBuffer[32];
 	static BYTE SidAuthenticatedUsersBuffer[32];
+	static BYTE SidAllApplicationPackagesBuffer[32];
 
 	ce = st->st_ce;
 
@@ -2933,6 +2972,15 @@ win32_mode_string(struct stat *st, char *szMode)
 		*::GetSidSubAuthority(pSidAuthenticatedUsers, 1) = SECURITY_AUTHENTICATED_USER_RID;
 
 		//
+		// APPLICATION PACKAGE AUTHORITY\ALL APPLICATION PACKAGES (WinRT)
+		// S-1-15-2-1
+		//
+		pSidAllApplicationPackages = (PSID) SidAllApplicationPackagesBuffer;
+		::InitializeSid(pSidAllApplicationPackages, &siaAppPackageAuthority, SECURITY_BUILTIN_APP_PACKAGE_RID_COUNT/*nSubauthorities=2*/);
+		*::GetSidSubAuthority(pSidAllApplicationPackages, 0) = SECURITY_APP_PACKAGE_BASE_RID; // 2
+		*::GetSidSubAuthority(pSidAllApplicationPackages, 1) = SECURITY_BUILTIN_PACKAGE_ANY_PACKAGE; // 1
+
+		//
 		// Heuristic: Everyone and Authenticated Users are used to
 		// set the 'other' mode bytes.
 		//
@@ -3045,10 +3093,11 @@ win32_mode_string(struct stat *st, char *szMode)
 	// and Authenticated Users
 	//
 
-	mask = 0;
+	mask = 0; appMask = 0;
 
 	_GetEffectiveRightsFromAcl(ce, pAcl, pSidEveryone, SE_GROUP_ENABLED, &mask);
 	_GetEffectiveRightsFromAcl(ce, pAcl, pSidAuthenticatedUsers, SE_GROUP_ENABLED, &mask);
+	_GetEffectiveRightsFromAcl(ce, pAcl, pSidAllApplicationPackages, SE_GROUP_ENABLED, &appMask);
 
 	/// other mode chars
 	if (gbReg) {
@@ -3080,6 +3129,36 @@ win32_mode_string(struct stat *st, char *szMode)
 		}
 	}
 
+	// All Application Packages
+	if (gbReg) {
+		if (appMask & KEY_QUERY_VALUE) {
+			szMode[7]='R';
+		}
+		if (appMask & KEY_SET_VALUE) {
+			szMode[8]='W';
+		} else if (appMask & KEY_CREATE_SUB_KEY) { 
+			szMode[8] = 'A';  // rare --a------- // keys but not values
+		}
+		if (appMask & KEY_ENUMERATE_SUB_KEYS) {
+			szMode[9] = 'X';
+		}
+	} else {
+		if (appMask & FILE_READ_DATA/*=FILE_LIST_DIRECTORY*/) {
+			szMode[7]='R';
+			if (!bBinaryExecutable && (st->st_mode & S_IXUSR)) { // .CMD or .BAT
+				szMode[9] = 'X';
+			}
+		}
+		if (appMask & FILE_WRITE_DATA/*=FILE_ADD_FILE*/) {
+			szMode[8]='W';
+		} else if (appMask & FILE_APPEND_DATA) {
+			szMode[8] = 'A';  // rare --------a-
+		}
+		if (bBinaryExecutable && (appMask & FILE_EXECUTE)) {
+			szMode[9] = 'X';
+		}
+	}
+
 check_attribs:
 	//
 	// Set mode chars based on the file attributes
@@ -3103,12 +3182,14 @@ check_attribs:
 		if (szMode[1] == 'r') {
 			szMode[1] = 'R';
 		}
+#ifdef UNDEFINED
 		if (szMode[4] == 'r') {
 			szMode[4] = 'R';
 		}
 		if (szMode[7] == 'r') {
 			szMode[7] = 'R';
 		}
+#endif
 	}
 
 	return;

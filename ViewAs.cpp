@@ -2,12 +2,12 @@
 //
 // View effective permissions for another user.  (--user=name)
 //
-// Copyright (c) 2004, Algin Technology LLC
+// Copyright (c) 2004-2015, U-Tools Software LLC
 // Written by Alan Klietz 
 //
 // Distributed under GNU General Public License version 2.
 //
-// $Id: ViewAs.cpp,v 1.2 2007/11/06 00:30:05 cvsalan Exp $
+// $Id: ViewAs.cpp,v 1.4 2015/05/09 08:48:26 cvsalan Exp $
 //
 
 //
@@ -324,8 +324,7 @@ _GetViewAs(char* szViewAs, PSID pUserSid, DWORD cbSid,
 		/*NOTREACHED*/
 		return FALSE;
 	}
-	lstrcpynW(wszSamDomain, pumi2->usrmod2_domain_name,
-		sizeof(wszSamDomain) / sizeof(WCHAR));
+	wcscpy(wszSamDomain, pumi2->usrmod2_domain_name);
 	::NetApiBufferFree(pumi2);
 
 #ifdef _DEBUG
@@ -354,7 +353,7 @@ _GetViewAs(char* szViewAs, PSID pUserSid, DWORD cbSid,
 	// Build Domain\User
 	//
 	if (wcschr(wszUser, L'\\') != 0) { // if already domain\user
-		lstrcpyW(wszDomUser, wszUser); // use as-is
+		wcscpy(wszDomUser, wszUser); // use as-is
 	} else {
 		_snwprintf(wszDomUser, sizeof(wszDomUser)/sizeof(WCHAR),
 			L"%ws\\%ws", wszUserDomain, wszUser);

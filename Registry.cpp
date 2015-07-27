@@ -2,11 +2,11 @@
 //
 // Registry layer for Win32
 //
-// Copyright (c) 2007, Algin Technology LLC
+// Copyright (c) 2007-2015, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: Registry.cpp,v 1.13 2010/05/14 02:34:55 cvsalan Exp $
+// $Id: Registry.cpp,v 1.18 2015/05/09 08:49:57 cvsalan Exp $
 //
 
 #define WIN32_LEAN_AND_MEAN
@@ -43,6 +43,10 @@
 #include "xmbrtowc.h" // for get_codepage()
 #include "ls.h"
 #include "Registry.h"
+
+#ifndef HKEY_CURRENT_USER_LOCAL_SETTINGS // Win7
+#define HKEY_CURRENT_USER_LOCAL_SETTINGS ((HKEY)(ULONG_PTR)((LONG)0x80000007))
+#endif
 
 
 typedef LONG (WINAPI *PFNREGLOADMUISTRINGW) (
@@ -167,6 +171,8 @@ typedef unsigned char *PUSTR;
 // \HKEY_CURRENT_USER\xxx -> \HKCU\xxx
 // \HKEY_USERS\xxx -> \HKU\xxx
 // \HKEY_CLASSES_ROOT\xxx -> \HKCR\xxx
+// \HKEY_CURRENT_CONFIG\xxx -> \HKCC\xxx
+// \HKEY_CURRENT_USER_LOCAL_SETTINGS -> \HKCULS\xxx (Win7)
 //
 
 #define FR_MAGIC 0x99887766
@@ -276,6 +282,22 @@ _PrepReg(const char *szPath, struct find_reg *fr, DWORD dwType)
 		fr->fr_hRoot = HKEY_CLASSES_ROOT;
 	} else if (_mbsicmp((PCUSTR)szRoot, (PCUSTR)"HKEY_CLASSES_ROOT") == 0) {
 		fr->fr_hRoot = HKEY_CLASSES_ROOT;
+	} else if (_mbsicmp((PCUSTR)szRoot, (PCUSTR)"HKCC") == 0) {
+		fr->fr_hRoot = HKEY_CURRENT_CONFIG;
+	} else if (_mbsicmp((PCUSTR)szRoot, (PCUSTR)"HKEY_CURRENT_CONFIG") == 0) {
+		fr->fr_hRoot = HKEY_CURRENT_CONFIG;
+	// HKEY_CURRENT_USER_LOCAL_SETTINGS
+	// For non-roaming registry settings. 
+	// The settings do in HKCULS do _not_ overlay HKCU.
+	// Apps must explicitly open HKEY_CURRENT_USER_LOCAL_SETTINGS to gain
+	// access to the non-roaming regvals (instead of HKEY_CURRENT_USER).
+	//
+	// Alias for HKCU\Software\Classes\Local Settings (Win7 or later),
+	// (\Users\MyUserName\AppData\Local\Microsoft\Windows\UsrClass.dat)
+	} else if (_mbsicmp((PCUSTR)szRoot, (PCUSTR)"HKCULS") == 0) {
+		fr->fr_hRoot = HKEY_CURRENT_USER_LOCAL_SETTINGS; // Win7
+	} else if (_mbsicmp((PCUSTR)szRoot, (PCUSTR)"HKEY_CURRENT_USER_LOCAL_SETTINGS") == 0) {
+		fr->fr_hRoot = HKEY_CURRENT_USER_LOCAL_SETTINGS; // Win7
 	} else {
 		SetLastError(ERROR_PATH_NOT_FOUND);
 		return FALSE;
@@ -511,6 +533,7 @@ more_printf("\n");
 		//
 		// Enumerate subkeys first
 		//
+Again:
 		dwLen = FILENAME_MAX;
 		if ((lErrCode = ::RegEnumKeyExA(fr->fr_hKey, fr->fr_dwIndex,
 			pfd->name, &dwLen, NULL, NULL, NULL, &ftWrite)) != ERROR_SUCCESS) {
@@ -521,6 +544,16 @@ more_printf("\n");
 			}
 			::SetLastError((DWORD)lErrCode);
 			return FALSE;
+		}
+		if (_stricmp(pfd->name, "Wow6432Node") == 0) {
+			//
+			// BUG: We must never follow or return Wow6432Node. Otherwise
+			// we might create a bogus subkey under it.
+			//
+			// WORKAROUND: Ignore it
+			//
+			fr->fr_dwIndex++;
+			goto Again;
 		}
 		pfd->attrib |= FILE_ATTRIBUTE_DIRECTORY;
 		//

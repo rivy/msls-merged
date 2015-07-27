@@ -1,11 +1,11 @@
 //
 // cstr.h - Stand-alone mini-CString
 //
-// Copyright (c) 2004, Algin Technology LLC
+// Copyright (c) 2004-2015, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: CStr.h,v 1.2 2007/11/06 00:30:04 cvsalan Exp $
+// $Id: CStr.h,v 1.4 2015/05/09 08:48:26 cvsalan Exp $
 //
 
 ///////////////////////////////////////////////////////////////////////////////

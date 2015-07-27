@@ -19,7 +19,7 @@
    Unix programs use to perform this function.  I wrote this from scratch
    based on specifications for the pattern matching.  --RMS.  */
 
-/* $Id: glob.c,v 1.7 2005/09/01 08:53:13 cvsalan Exp $ */
+/* $Id: glob.c,v 1.8 2014/10/02 23:18:26 cvsalan Exp $ */
 
 #include <config.h>
 
@@ -348,7 +348,9 @@ glob_vector (pat, dir)
      we can dispense with reading the directory, and just see if there is
      a filename `DIR/PAT'.  If there is, and we can access it, just make the
      vector to return and bail immediately. */
-  if (skip == 0 && glob_pattern_p (pat, dir/*AEK*/) == 0)
+  if (skip == 0 && (
+      (pat[0] == '.' && pat[1] == '\0' || pat[0] == '.' && pat[1] == '.' && pat[2] == '\0') // . or .. -- AEK
+      || glob_pattern_p (pat, dir/*AEK*/) == 0))
     {
       int dirlen;
       struct stat finfo;

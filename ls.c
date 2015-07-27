@@ -15,7 +15,7 @@
    along with this program; if not, write to the Free Software Foundation,
    Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
-/* $Id: ls.c,v 1.18 2011/01/27 22:19:56 cvsalan Exp $ */
+/* $Id: ls.c,v 1.25 2015/05/11 20:37:24 cvsalan Exp $ */
 
 /* If ls_mode is LS_MULTI_COL,
    the multi-column format is the default regardless
@@ -38,7 +38,7 @@
    Flaherty <dennisf@denix.elk.miles.com> based on original patches by
    Greg Lee <lee@uhunix.uhcc.hawaii.edu>.  */
 
-/* Microsoft Windows modifications copyright (c) 2011, Algin Technology LLC
+/* Microsoft Windows modifications copyright (c) 2004-2015, U-Tools Software LLC
    Written by Alan Klietz.  Distributed under
    GNU General Public License version 2. */
 
@@ -95,7 +95,7 @@
 #endif
 
 #include <mbstring.h> // AEK - multibyte character set (MBCS) string functions
-#include <mbctype.h>
+//#include <mbctype.h>
 
 /* Get iswprint().  */
 #if HAVE_WCTYPE_H
@@ -1019,6 +1019,7 @@ enum acls_format const acls_formats[] =
   acls_none, acls_none, acls_none,
   acls_short,
   acls_very_long,
+  acls_exhaustive
 };
 
 static char const *const acls_args[] =
@@ -1026,7 +1027,7 @@ static char const *const acls_args[] =
   "long", "yes", "always",
   "none", "no", "never",
   "short",
-  "very-long",
+  "very-long", "exhaustive",
   0
 };
 
@@ -1196,6 +1197,9 @@ exit_ls(void)
     // Restore the console default color
     SetConsoleTextAttribute(hStdOut, wDefaultColors);
 
+    // Restore the console's original codepage
+    RestoreConsoleCodePage();
+
   } else if (print_with_color) { // AEK
     //
     // Restore the console color for rxvt/emacs
@@ -1245,72 +1249,50 @@ main (int argc, char **argv)
   //
   // Set the locale to the default OEM or ANSI codepage
   // depending on whether or not we are inside a console window
-  // and are writing it (not ls > foo.txt).
+  // and are writing to it (not ls > foo.txt).
   //
   // BUG: If writing to a file the command-line will be parsed
   // using ANSI instead of OEM.
   //
   if (_HasConsole() && isatty(STDOUT_FILENO)) { // AEK
-    gbOemCp = TRUE;
+    //
+    // By default we use the OEM codepage, unless the console is
+    // using a TrueType (TT) font.
+    // 
+    gbOemCp = !IsConsoleFontTrueType();
+  }
+
+  if (gbOemCp) {
     //
     // Process has a console.  Set the codepage to OEM so that
     // extended Latin and Asian charsets are parsed and displayed correctly.
     //
+    SetCodePage(FALSE/*bAnsi*/);
 
-    //
-    // Arrange to have CreateFile() and FindFirstFile() use the OEM
-    // character set for input and output instead of the ANSI character set.
-    //
-    // Alternative: Call SetConsoleCP(ansi-code-page) [changes input only] and
-    // call SetConsoleOutputCP(ansi-code-page).  (W2K or later.)
-    //
-    // BUG: SetConsoleOutputCP does not work with raster console fonts.
-    //
-    SetFileApisToOEM();
+  } else { // ANSI code page, or the process does not have a console
 
-    //
-    // Arrange for locale-sensitive string functions to use the OEM
-    // character set instead of the ANSI character set.
-    //
-    setlocale(LC_ALL, ".OCP"); // barely documented..
-
-    //
-    // *Must* set the multibyte code page after changing the locale,
-    // otherwise MBCS string functions will continue to use the 
-    // "C" code page!
-    //
-    if (_setmbcp(_MB_CP_LOCALE) < 0) { // set to OEM
-      error(EXIT_FAILURE, 0, "_setmbcp: unable to set code page");
-    }
-
-  } else {
-    gbOemCp = FALSE;
-    //
-    // Process does _not_ have a console.  For example running under
-    // Emacs or rxvt.
-    //
-
-    //
-    // Use ANSI charset for FindFirstFile/FindNextFile
-    // (should be default)
-    //
-    SetFileApisToANSI();
-
-    //
-    // Use the ANSI codepage.  (Instead of "C" codepage)
-    //
-    setlocale(LC_ALL, ".ACP");
-
-    //
-    // *Must* set the multibyte code page after changing the locale,
-    // otherwise MBCS string functions will continue to use the 
-    // "C" code page!
-    //
-    if (_setmbcp(_MB_CP_LOCALE) < 0) { // set to OEM
-      error(EXIT_FAILURE, 0, "_setmbcp: unable to set code page");
-    }
+    SetCodePage(TRUE/*bAnsi*/);
 
   }
+  //
+  // If we have a console allocated to us, set the console codepage to what
+  // we want - ANSI or OEM.
+  //
+  if (_HasConsole()) {
+    SetConsoleCodePage(get_codepage());
+  }
+
+#endif // _WIN32
+
+#if WIN32
+  //
+  // Arrange to restore console colors on exit - AEK
+  //
+  atexit (exit_ls);
+  signal(SIGINT, signal_ls); // restore console colors on ^C
+  signal(SIGBREAK, signal_ls); // restore console colors on BREAK
+#else
+  atexit (close_stdout);
 #endif
 
   //
@@ -1329,7 +1311,9 @@ main (int argc, char **argv)
 #ifdef SETVBUF_REVERSED // if Unix SVR2 bug, swap args
   setvbuf(stdout, _IOFBF, stdout_buf, sizeof(stdout_buf));
 #else
-  setvbuf(stdout, stdout_buf, _IOFBF, sizeof(stdout_buf));
+  if (setvbuf(stdout, stdout_buf, _IOFBF, sizeof(stdout_buf)) < 0) {
+    error(EXIT_FAILURE, 0, "setvbuf failed");
+  }
 #endif
 
   more_enable(1); // paginate --help or usage output if tty  AEK
@@ -1337,17 +1321,6 @@ main (int argc, char **argv)
 #if ENABLE_NLS // AEK - not supported in Win32 yet.. TODO
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
-#endif
-
-#if WIN32
-  //
-  // Arrange to restore console colors on exit - AEK
-  //
-  atexit (exit_ls);
-  signal(SIGINT, signal_ls); // restore console colors on ^C
-  signal(SIGBREAK, signal_ls); // restore console colors on BREAK
-#else
-  atexit (close_stdout);
 #endif
 
 #define N_ENTRIES(Array) (sizeof Array / sizeof *(Array))
@@ -2016,49 +1989,28 @@ Use `--si' for the old meaning."));
 
 	case ANSICP_OPTION:
 	  gbOemCp = FALSE;
-	  //
-	  // Use ANSI charset for FindFirstFile/FindNextFile
-	  //
-	  SetFileApisToANSI();
 
-	  //
-	  // Use the ANSI codepage.  (Instead of "C" codepage)
-	  //
-	  setlocale(LC_ALL, ".ACP");
+	  SetCodePage(TRUE/*bAnsi*/);
 
-	  //
-	  // *Must* set the multibyte code page after changing the locale,
-	  // otherwise MBCS string functions will continue to use the 
-	  // "C" code page!
-	  //
-	  if (_setmbcp(_MB_CP_LOCALE) < 0) { // set to OEM
-	    error(EXIT_FAILURE, 0, "_setmbcp: unable to set code page");
+	  if (_HasConsole()) {
+	    //
+	    // Set the console codepage to ANSI.
+	    //
+	    SetConsoleCodePage(get_codepage());
 	  }
 
 	  break;
 
 	case OEMCP_OPTION:
 	  gbOemCp = TRUE;
-	  //
-	  // Arrange to have CreateFile() and FindFirstFile() use the OEM
-	  // character set for input and output instead of the ANSI character
-	  // set. 
-	  //
-	  SetFileApisToOEM();
 
-	  //
-	  // Arrange for locale-sensitive string functions to use the OEM
-	  // character set instead of the ANSI character set.
-	  //
-	  setlocale(LC_ALL, ".OCP"); // barely documented..
+	  SetCodePage(FALSE/*bAnsi*/);
 
-	  //
-	  // *Must* set the multibyte code page after changing the locale,
-	  // otherwise MBCS string functions will continue to use the 
-	  // "C" code page!
-	  //
-	  if (_setmbcp(_MB_CP_LOCALE) < 0) { // set to OEM
-	    error(EXIT_FAILURE, 0, "_setmbcp: unable to set code page");
+	  if (_HasConsole()) {
+	    //
+	    // Set the console codepage to OEM.
+	    //
+	    SetConsoleCodePage(get_codepage());
 	  }
 
 	  break;
@@ -3537,7 +3489,8 @@ print_current_files (void)
 	  if (gbReg) {
 	    print_registry_value(files[i].stat.st_ce);
 	  }
-	  if (acls_format == acls_long || acls_format == acls_very_long) {
+	  if (acls_format == acls_long || acls_format == acls_very_long
+	    	|| acls_format == acls_exhaustive) {
 	    print_long_acl(files[i].stat.st_ce);
 	  }
 	  //
@@ -4911,13 +4864,13 @@ List information about the FILEs (the current directory by default).\n"));
 %s version %s for Microsoft Windows.\n"), program_name, VERSION); // AEK
       more_printf (_("\
 Microsoft Windows extensions by Alan Klietz\n\
-Get the latest version at http://utools.com/msls.asp\n")); // AEK
+Get the latest version at https://u-tools.com/msls.asp\n")); // AEK
       more_printf (_("\n\
   -a, --all                  do not hide entries starting with .\n\
   -A, --almost-all           do not list implied . and ..\n\
       --acls[=STYLE]         show the file Access Control Lists (ACL):\n\
-                               STYLE may be `short', `long', `very-long'\n\
-                               or `none'\n\
+                               STYLE may be `none', `short', `long',\n\
+                               `very-long', or `exhaustive'\n\
       --ansi-cp              use the ANSI code page for output\n\
   -b, --escape               print octal escapes for nongraphic characters\n\
       --block-size=SIZE      use SIZE-byte blocks.  See -s\n\

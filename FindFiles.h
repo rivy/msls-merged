@@ -1,7 +1,7 @@
 //
 // FindFiles.h
 //
-// $Id: FindFiles.h,v 1.1 2007/10/03 20:41:52 cvsalan Exp $
+// $Id: FindFiles.h,v 1.2 2014/10/02 23:18:26 cvsalan Exp $
 //
 
 #pragma once
@@ -12,7 +12,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 #ifdef UNDEFINED // not yet, maybe someday..
 //////////////////////////////////////////////////////////////////////////
