@@ -51,28 +51,33 @@
 #
 
 #
-# Compiling with Visual Studio 2005/2008/2010/2013 C++ 
-# ----------------------------------------------------
+# Compiling with Visual Studio 2005/2008/2010/2013/2015 C++ 
+# ----------------------------------------------------------
 #
-# Alternately you can use the Visual Studio 2005/2008/2010/2013 C++ compiler.
-# It uses the Windows Software Development Kit Update for Windows Vista,
-# dated February 2007 ("MSSDK07").
+# Alternately you can use the Visual Studio 2005/2008/2010/2013/2015
+# C++ compiler.  Full backward compatibility all the way back to Windows 95
+# is possible with 2005/2008.  2010 or later will limit execution to newer
+# operating systems.
+#
+# Full backward compatibility requires the Windows Software Development Kit
+# Update for Windows Vista, dated February 2007 ("MSSDK07").
 #
 # Unfortunately MSSDK07 omits the legacy 32-bit MSVCRT.LIB, which
 # is necessary to link apps for pre-XP operating systems.
 # MSSDK07 only includes the 64-bit legacy MSVCRT.LIB.  VS2005/8 only 
 # includes MSVCRT.LIB for MSVCR80.DLL/MSVCR90.DLL.
 #
-# To use VC2005/8 C++ you will need to scrounge for MSVCRT.LIB from
-# a Visual Studio 6 installation.  Preferrably one patched to VS6 Service
-# Pack 6 (file MSVCRT.LIB dated August 23 2000).  For debugging you will
+# To use VC2005/8 C++ for 100% backward compatibility you will need to 
+# scrounge for MSVCRT.LIB from a Visual Studio 6 installation. 
+# Preferrably one patched to VS6 Service Pack 6 
+# (file MSVCRT.LIB dated August 23 2000).  For debugging you will
 # need MSVCRTD.LIB.
 # 
 # And you will need to splice in some missing .OBJ files:
 # __alloca_probe_16.obj, __aulldvrm.obj, and __ftol2.obj.
 # Use lib.exe to extract them from VS2005/8's MSVCRT.LIB.
 # 
-# To compile with VS2005/2008/2010/2013 comment-out USE_VS6 below.  Also
+# To compile with VS2005 or later, comment-out USE_VS6 below.  Also
 # change "SETBUILD.CMD vc6" in BUILD.CMD as follows:
 #
 # setbuild vc6 --> Use VS6 compiler + VS6 libs
@@ -83,6 +88,7 @@
 # setbuild vc106 --> Use VS2010 compiler (VC10) + VS6 libs
 # setbuild vc10 --> Use VS2010 compiler (VC10) + VS2010 libs (MSVCR100.DLL)
 # setbuild vc12 --> Use VS2013 compiler (VC12) + VS2012 libs (MSVCR120.DLL)
+# setbuild vc14 --> Use VS2015 compiler (VC14) + VS2015 libs
 #
 # Apps compiled with Visual Studio 2010 (VC10) or later will not run on
 # Windows 2000 because VC10 dropped support for Windows 2000.  Ditto W9x,
@@ -93,6 +99,7 @@
 # execution on Windows 2000, Windows NT (Version 5.0)
 # or Windows 9x (Version 4).  To run on 2000/NT/Win9x you must build with
 # VS2005 or with VS6. 
+# Visual Studio 2015 will limit execution to Windows Vista or later.
 # 
 USE_VS6=1
 
@@ -125,9 +132,9 @@ CFG=msls - Win32 Debug
 !ENDIF 
 
 !IFDEF USE_VS6
-# VS2005/VS2008/VS2010/VS2013 root for the linker to use with VS6
+# VS2005/VS2008 root for the linker to use with VS6
 #VISUAL_STUDIO_20XX_ROOT=C:\Program Files\Microsoft Visual Studio 2005
-VISUAL_STUDIO_20XX_ROOT=E:\VS2013
+VISUAL_STUDIO_20XX_ROOT=E:\VS2008
 !ENDIF
 
 CPP=cl

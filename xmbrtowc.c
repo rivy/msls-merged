@@ -150,7 +150,7 @@ void SetConsoleCodePage(int cp)
 	// MBCS to Unicode manually just before calling WriteFile() in _write().
 	// 
 	if (DynaLoad("KERNEL32.DLL", "SetConsoleCP", // Sets the input codepage
-			(PPFN)&pfnSetConsoleCP)) {
+			(PPFN)&pfnSetConsoleCP)) { // Not avail on Win95
 		if (guiOriginalConsoleCP == 0) {
 			guiOriginalConsoleCP = GetConsoleCP(); // available on Win95
 		}
@@ -167,7 +167,7 @@ void SetConsoleCodePage(int cp)
 	// otherwise the MSVCRT MBCS-to-Unicode output functions go wonky.
 	//
 	if (DynaLoad("KERNEL32.DLL", "SetConsoleOutputCP",
-			(PPFN)&pfnSetConsoleOutputCP)) {
+			(PPFN)&pfnSetConsoleOutputCP)) { // Not avail on Win95
 		if (guiOriginalConsoleOutputCP == 0) {
 			guiOriginalConsoleOutputCP = GetConsoleOutputCP(); // avail on Win95
 		}
@@ -204,13 +204,24 @@ void RestoreConsoleCodePage()
 void SetCodePage(int bAnsi)
 {
 	//
-	// BUG: The proper way to do this is to dynaload the Unicode file
+	// BUG: We have to use the system-wide codepage (CP_ACP or CP_OEM)
+	// to stay in sync with SetFileApisToANSI() and SetFileApisToOEM(),
+	// which both only use CP_ACP or CP_OEM (Win95 doesn't have CP_THREAD_CP).
+	//
+	// This is required because we use ANSI file APIs (GetFileAttributesA),
+	// and the kernel uses CP_ACP implicitly, even on Windows 10.
+	//
+	// We must use ANSI, not Unicode, because the Unicode APIs are not 
+	// available on Win95.
+	//
+	// The proper way to do this is to dynaload the Unicode file
 	// APIs:  (*pfnGetFileAttributesW)(...), (*pfnFindFirstFileW)(...)
 	// and explicitly translate using WideCharToMultiByte(get_codepage(),...).
-	// Ditto the registry APIs.
+	// Ditto the registry APIs.  Then we can use CP_THREAD_ACP (and
+	// fall back to CP_ACP on Win9x.)
 	//
 	// The problem is that Win9x doesn't have Unicode so we have to
-	// dynaload everything, which is a pain.  TODO
+	// dynaload every Unicode file API, which is a pain.  TODO
 	//
 
 	// ".1252", ".437"

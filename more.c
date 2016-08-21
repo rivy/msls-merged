@@ -185,9 +185,17 @@ static void InitInterceptIsatty()
 	static PVOID pfnIsatty;
 #ifdef _DLL
 # ifdef _DEBUG
-#  define MSVCRT "MSVCRTD.DLL"
-# else
-#  define MSVCRT "MSVCRT.DLL"
+#  if _MSC_VER < 1300 // if VC6
+#   define MSVCRT "MSVCRTD.DLL"
+#  else
+#   error Need to change MSVCRTD.DLL to MSVCR1xxD.DLL (VC7-12) or UCRTBASED.DLL (VC14+)
+#  endif
+# else // !_DEBUG
+#  if _MSC_VER < 1300 // if VC6
+#   define MSVCRT "MSVCRT.DLL"
+#  else
+#   error Need to change to MSVCR1xx.DLL (VC7-12) or UCRTBASE.DLL (VC14+)
+#  endif
 # endif
 	if (!DynaLoad(MSVCRT, "_isatty", (PPFN)&pfnIsatty)) {
 		error(EXIT_FAILURE, 0, "Cannot find _isatty.");

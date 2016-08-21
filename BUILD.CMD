@@ -40,21 +40,36 @@ if errorlevel 2 goto done
 rem The remainder of this file is for packaging the distribution
 rem and is not likely to be helpful to you
 rem
-set URL="https://u-tools.com/msls.asp"
+set URL="https://u-tools.com/msls"
 rem
-rem Sign the .EXE with Authenticode Certificate
+rem Authenticode certificate
 rem
-rem signcode -spc c:\crt\14\certcode14.spc -v c:\crt\14\certcode14.pvk -n "ls for Windows" -a sha1 -i %URL% -t "http://timestamp.verisign.com/scripts/timestamp.dll" Release\ls.exe
-SET SIGNTOOL=E:\MSSDK14\bin\x86\signtool.exe
-SET CERTCODEDIR=C:\crt\code14
+rem BUG: XP and W2K3R2 prior to 2009/03/19 Crypt32.dll 5.131.2600.5779 
+rem do not support SHA256.  Chktrust fails with 'Unknown publisher'.
+rem Ditto sigcheck -a -h -i  (Lies about cert path.)
+rem
+rem It is likely that _no_ version of XP/W2K3 supports SHA-2.   See
+rem Microsoft Security Advisory 2949927, 'Availability of SHA-2 Hashing
+rem Algorithm for Windows 7 and Windows Server 2008 R2'.
+rem 
+rem Microsoft pushed a patch in 2014/10 for Win7/W2K8R2 for SHA-2.  Win8+
+rem has it built-in.  They specifically did _not_ patch Vista- or W2K8-.
+rem
+rem WORKAROUND: Double-sign all .EXEs with SHA-1 (primary) and SHA-2 (secondary)
+rem
+SET CERTCODEDIR=C:\crt\code16
+SET SIGNTOOL=E:\MSSDK15\bin\x64\signtool.exe
 SET CERTCODEPFX=%CERTCODEDIR%\certcode.pfx
 SET CERTCODEAC=%CERTCODEDIR%\ThawtePrimaryRootUnderPremium.cer
 SET TITLE="ls for Windows"
 rem
 set /P PASSPHRASE=Enter the passphrase? 
-%SIGNTOOL% sign /v /f %CERTCODEPFX% /t "http://timestamp.verisign.com/scripts/timestamp.dll" /d %TITLE% /p %PASSPHRASE% /ac %CERTCODEAC% /du %URL% Release\ls.exe
+%SIGNTOOL% sign /v /f %CERTCODEPFX% /fd sha1 /t "http://timestamp.verisign.com/scripts/timestamp.dll" /d %TITLE% /p %PASSPHRASE% /ac %CERTCODEAC% /du %URL% Release\ls.exe
+if errorlevel 1 goto done
+%SIGNTOOL% sign /v /as /f %CERTCODEPFX% /fd sha256 /tr "http://timestamp.geotrust.com/tsa" /td sha256 /d %TITLE% /p %PASSPHRASE% /ac %CERTCODEAC% /du %URL% Release\ls.exe
 if errorlevel 1 goto done
 copy /Y Release\ls.exe c:\lbin\ls.exe
+copy /Y Release\ls.exe c:\vmshared\ls.exe
 rem
 rem Make DISTRIB for distribution
 rem
@@ -104,8 +119,9 @@ set WZIPSE="%ProgramFiles(x86)%\wzipse\winzipse.exe"
 rem
 rem Sign the self-extracting .EXE with Authenticode Certificate
 rem
-rem signcode -spc c:\crt\certcode14.spc -v c:\crt\certcode14.pvk -n "ls for Windows" -a sha1 -i %URL% -t "http://timestamp.verisign.com/scripts/timestamp.dll" %PACKAGE%.exe
 %SIGNTOOL% sign /v /f %CERTCODEPFX% /t "http://timestamp.verisign.com/scripts/timestamp.dll" /d %TITLE% /p %PASSPHRASE% /ac %CERTCODEAC% /du %URL% %PACKAGE%.exe
+if errorlevel 1 goto done
+%SIGNTOOL% sign /v /as /f %CERTCODEPFX% /fd sha256 /tr "http://timestamp.geotrust.com/tsa" /td sha256 /d %TITLE% /p %PASSPHRASE% /ac %CERTCODEAC% /du %URL% %PACKAGE%.exe
 if errorlevel 1 goto done
 cd ..
 echo Build complete in DISTRIB_ZIP.

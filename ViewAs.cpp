@@ -7,7 +7,7 @@
 //
 // Distributed under GNU General Public License version 2.
 //
-// $Id: ViewAs.cpp,v 1.4 2015/05/09 08:48:26 cvsalan Exp $
+// $Id: ViewAs.cpp,v 1.5 2015/05/20 07:24:32 cvsalan Exp $
 //
 
 //
