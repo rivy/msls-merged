@@ -6,11 +6,9 @@
 // w/o reference to the MSVCRT code.  Since I was doing it from scratch
 // I decided to add UTF-8 support as an exercise. 
 //
-// Copyright (c) 2015, U-Tools Software LLC
+// Copyright (c) 2018, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
-//
-// $Id: xmbrtowc.c,v 1.8 2015/05/11 20:37:24 cvsalan Exp $
 //
 
 #ifdef HAVE_CONFIG_H

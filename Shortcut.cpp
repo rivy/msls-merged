@@ -1,14 +1,14 @@
 //////////////////////////////////////////////////////////////////////////
 //
-// Query the shortcut .LNK for the target path
+// Shortcut.cpp - Query the shortcut .LNK for the target path
 //
 // Used by stat()
 //
-// Copyright (c) 2004-2015, U-Tools Software LLC
+// Copyright (c) 2004-2018, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
 //
-// $Id: Shortcut.cpp,v 1.6 2015/05/09 08:49:57 cvsalan Exp $
+// $Id: Shortcut.cpp,v 1.7 2016/12/29 22:20:22 cvsalan Exp $
 //
 
 #define WIN32_LEAN_AND_MEAN

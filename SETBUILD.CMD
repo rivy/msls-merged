@@ -3,7 +3,7 @@ REM
 REM SETBUILD.CMD - Set build environment for various compilers.
 REM Written by Alan Klietz 
 REM
-REM Copyright (c) 1997-2015, U-Tools Software LLC.  Distributed under GNU
+REM Copyright (c) 1997-2018, U-Tools Software LLC.  Distributed under GNU
 REM General Public License version 2.
 REM
 REM You will need to edit the drive letters and paths to match your
@@ -14,16 +14,21 @@ set VC9Settings=%USERPROFILE%\Local Settings\Application Data\Microsoft\VisualSt
 set VC10Settings=%USERPROFILE%\Local Settings\Application Data\Microsoft\MSBuild\v4.0\
 set VC12Settings=%USERPROFILE%\Local Settings\Application Data\Microsoft\MSBuild\v4.0\
 set VC14Settings=%USERPROFILE%\Local Settings\Application Data\Microsoft\MSBuild\v4.0\
+set VC141Settings=%USERPROFILE%\Local Settings\Application Data\Microsoft\MSBuild\v4.0\
 ) else ( set VC8Settings=%LOCALAPPDATA%\Microsoft\VisualStudio\8.0\
 set VC9Settings=%LOCALAPPDATA%\Microsoft\VisualStudio\9.0\
 set VC10Settings=%LOCALAPPDATA%\Microsoft\MSBuild\v4.0\
 set VC12Settings=%LOCALAPPDATA%\Microsoft\MSBuild\v4.0\
 set VC14Settings=%LOCALAPPDATA%\Microsoft\MSBuild\v4.0\
+set VC141Settings=%LOCALAPPDATA%\Microsoft\MSBuild\v4.0\
+Rem Note: VC14 has strongly deprecated per-user project sheets.  See
+Rem the Help topic 'Working with Project Properties' in Help 2.3.
 )
 
 set DevDrive=E:& set VS6=E:\DevStudio
 if /i "%COMPUTERNAME%"=="HUMMER64" set DevDrive=H:& set VS6=G:\DevStudio
 if /i "%COMPUTERNAME%"=="QUAD" set DevDrive=H:& set VS6=G:\DevStudio
+if /i "%COMPUTERNAME%"=="SNAP" set DevDrive=C:& set VS6=C:\DevStudio
 
 rem Required for vc8-vc9 fallthru
 set VCSettings=%VC9Settings%
@@ -33,6 +38,7 @@ set HomeVC9Settings=E:\home\alan\doc\Visual Studio 2008\Settings\
 set HomeVC10Settings=E:\home\alan\doc\Visual Studio 2010\Settings\
 set HomeVC12Settings=E:\home\alan\doc\Visual Studio 2013\Settings\
 set HomeVC14Settings=E:\home\alan\doc\Visual Studio 2015\Settings\
+set HomeVC141Settings=E:\home\alan\doc\Visual Studio 2017\Settings\
 
 rem Required for vc8-vc9 fallthru
 set HomeVCSettings=%HomeVC9Settings%
@@ -44,6 +50,9 @@ set VCLib=E:\ae\libvc96
 
 set FrameworkVersion=v3.5
 set FrameworkSDKDir=%DevDrive%\VS2008\SDK\v3.5\
+
+if "%AE_UCRTVER%" == "" set AE_UCRTVER=10.0.16299.0 & echo Defaulting to AE_UCRTVER 10.0.16299.0
+if "%AE_VCTOOLS%" == "" set AE_VCTOOLS=14.11.25503 & echo Defaulting to AE_VCTOOLS 14.11.25503.0
 
 if not "%ProgramFiles(x86)%"=="" ( set REG32=%SystemRoot%\SysWOW64\reg.exe
 ) else ( set REG32=%SystemRoot%\System32\reg.exe
@@ -98,7 +107,9 @@ Rem Note: vc126x64 is no longer used
 if "%1"=="vc126x64" goto vc126x64
 if "%1"=="vc14" goto vc14
 if "%1"=="vc14x64" goto vc14x64
-echo Usage: setbuild [vc6,vc8,vc9,vc10,vc12,vc14,vc8x64,vc9x64,vc10x64,vc12x64,vc14x64,vc86,vc96,vc86x64,vc96x64,vc106x64,vc10net35,vc10net35x64,vc10net4,vc10net4x64,vc126x64,restore]
+if "%1"=="vc141" goto vc141
+if "%1"=="vc141x64" goto vc141x64
+echo Usage: setbuild [vc6,vc8,vc9,vc10,vc12,vc14,vc141,vc8x64,vc9x64,vc10x64,vc12x64,vc14x64,vc141x64,vc86,vc96,vc86x64,vc96x64,vc106x64,vc10net35,vc10net35x64,vc10net4,vc10net4x64,vc126x64,restore]
 goto done
 :restore
 if "%basepath%"=="" goto norestore
@@ -802,10 +813,12 @@ set VCName=VS2015
 set VCVersion=14.0
 set VCLib=
 set AMD64=
-set FrameworkSDKDir=
-set FrameworkVersion=
+rem These env vars are required for msbuild /p:useenv=true
 Rem E:\MSSDK15 is a symlink to C:\Program Files (x86)\Windows Kits\10
 set WindowsSdkDir=C:\Program Files (x86)\Windows Kits\10\
+set FrameworkVersion=v4.6
+set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework\
+set FrameworkSDKDir=%WindowsSdkDir%
 set VSInstallDir=%DevDrive%\%VCName%\
 set VCInstallDir=%VSInstallDir%VC\
 set DevEnvDir=%VSInstallDir%Common7\IDE\
@@ -813,10 +826,10 @@ set NETFXTools=C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.
 set NETFXSDK=C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6\
 rem
 set PATH=%VSInstallDir%VC\bin;%WindowsSdkDir%bin\x86;%NETFXTools%;%VSInstallDir%Common7\Tools;%DevEnvDir%;C:\Program Files (x86)\MSBuild\14.0\bin;C:\Windows\Microsoft.NET\Framework\v4.0.30319;%PATH%
-set LIB=%LIB%;%VCInstallDir%lib;%VCInstallDir%atlmfc\lib;%WindowsSdkDir%lib\10.0.10586.0\ucrt\x86;%WindowsSdkDir%lib\10.0.10586.0\um\x86;%NETFXSDK%Lib\um\x86
+set LIB=%LIB%;%VCInstallDir%lib;%VCInstallDir%atlmfc\lib;%WindowsSdkDir%lib\%AE_UCRTVER%\ucrt\x86;%WindowsSdkDir%lib\%AE_UCRTVER%\um\x86;%NETFXSDK%Lib\um\x86
 rem LIBPATH is not needed in .NET 4.6
 set LIBPATH=
-set INCLUDE=%INCLUDE%;%VCInstallDir%include;%VCInstallDir%atlmfc\include;%WindowsSdkDir%Include\10.0.10586.0\ucrt;%WindowsSdkDir%include\10.0.10586.0\um;%WindowsSdkDir%include\10.0.10586.0\shared;%WindowsSdkDir%include\10.0.10586.0\winrt
+set INCLUDE=%INCLUDE%;%VCInstallDir%include;%VCInstallDir%atlmfc\include;%WindowsSdkDir%Include\%AE_UCRTVER%\ucrt;%WindowsSdkDir%include\%AE_UCRTVER%\um;%WindowsSdkDir%include\%AE_UCRTVER%\shared;%WindowsSdkDir%include\%AE_UCRTVER%\winrt
 REM
 REM The regval was extracted from a virgin install of VS2015.
 REM Static -- no need to change
@@ -843,10 +856,12 @@ set VCName=VS2015
 set VCVersion=14.0
 set VCLib=
 set AMD64=1
-set FrameworkSDKDir=
-set FrameworkVersion=
+rem These env vars are required for msbuild /p:useenv=true
 Rem E:\MSSDK15 is a symlink to C:\Program Files (x86)\Windows Kits\10
 set WindowsSdkDir=C:\Program Files (x86)\Windows Kits\10\
+set FrameworkVersion=v4.6
+set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework\
+set FrameworkSDKDir=%WindowsSdkDir%
 set VSInstallDir=%DevDrive%\%VCName%\
 set VCInstallDir=%VSInstallDir%VC\
 set DevEnvDir=%VSInstallDir%Common7\IDE\
@@ -856,10 +871,10 @@ rem
 rem Note: Use x86 SDK bins because the x64 SignTool is buggy, per MSDN
 rem Note: Use x86 .NET and NETFX Tools because the default x64 config does
 set PATH=%VSInstallDir%VC\bin\x86_amd64;%VSInstallDir%VC\bin;%WindowsSdkDir%bin\x86;%NETFXTools%;%VSInstallDir%Common7\Tools;%DevEnvDir%;C:\Program Files (x86)\MSBuild\14.0\bin;C:\Windows\Microsoft.NET\Framework\v4.0.30319;%PATH%
-set LIB=%LIB%;%VCInstallDir%lib\amd64;%VCInstallDir%atlmfc\lib\amd64;%WindowsSdkDir%lib\10.0.10586.0\ucrt\x64;%WindowsSdkDir%lib\10.0.10586.0\um\x64;%NETFXSDK%Lib\um\x64
+set LIB=%LIB%;%VCInstallDir%lib\amd64;%VCInstallDir%atlmfc\lib\amd64;%WindowsSdkDir%lib\%AE_UCRTVER%\ucrt\x64;%WindowsSdkDir%lib\%AE_UCRTVER%\um\x64;%NETFXSDK%Lib\um\x64
 rem LIBPATH is not needed in .NET 4.6
 set LIBPATH=
-set INCLUDE=%INCLUDE%;%VCInstallDir%include;%VCInstallDir%atlmfc\include;%WindowsSdkDir%Include\10.0.10586.0\ucrt;%WindowsSdkDir%include\10.0.10586.0\um;%WindowsSdkDir%include\10.0.10586.0\shared;%WindowsSdkDir%include\10.0.10586.0\winrt
+set INCLUDE=%INCLUDE%;%VCInstallDir%include;%VCInstallDir%atlmfc\include;%WindowsSdkDir%Include\%AE_UCRTVER%\ucrt;%WindowsSdkDir%include\%AE_UCRTVER%\um;%WindowsSdkDir%include\%AE_UCRTVER%\shared;%WindowsSdkDir%include\%AE_UCRTVER%\winrt
 REM
 REM The regval was extracted from a virgin install of VS2015.
 REM Static -- no need to change
@@ -871,6 +886,95 @@ if %ERRORLEVEL% EQU 0 goto done
 cp "%VCSettings%Microsoft.Cpp.x64.user_Alan_vc14.props" "%VCSettings%Microsoft.Cpp.x64.user.props"
 rem BUG: Race condition causes Exit to occur before /ResetSettings
 rem start /wait devenv.exe /ResetSettings "%HomeVCSettings%Alan_vc14.vssettings" /Command Exit
+rem python "%HomeVCSettings%SpliceSettings.py" %1
+rem See C:\lbin\OLD\SpliceSettings.py -- Good example of XML parsing in Python
+if not "%silent%"=="yes" echo Environment varibles set for %VCName%, target x64.
+goto done
+rem --------------------------------------------------------------------------
+:vc141
+REM
+REM Set the build environment for VC141 (Visual Studio 2017) on x86
+REM
+set UCRTVersion=%AE_UCRTVER%
+set VCSettings=%VC14Settings%
+set HomeVCSettings=%HomeVC141Settings%
+set VCName=VS2017
+set VCVersion=15.0
+set VCLib=
+set VS150COMNTOOLS=E:\VS2017\Common7\Tools\
+set AMD64=
+rem These env vars are required for msbuild /p:useenv=true
+Rem E:\MSSDK15 is a symlink to C:\Program Files (x86)\Windows Kits\10
+set WindowsSdkDir=C:\Program Files (x86)\Windows Kits\10\
+set FrameworkVersion=v4.0.30319
+set FrameworkVersion32=v4.0.30319
+set FrameworkVersion64=v4.0.30319
+set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework\
+set FrameworkSDKDir=%WindowsSdkDir%
+set VSInstallDir=%DevDrive%\%VCName%\
+set VCInstallDir=%VSInstallDir%VC\Tools\MSVC\%AE_VCTOOLS%\
+set DevEnvDir=%VSInstallDir%Common7\IDE\
+set NETFXTools=C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\
+set NETFXSDK=C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\
+rem
+set PATH=%VCInstallDir%bin\Hostx86\x86;%DevEnvDir%VC\VCPackages;%VSInstallDir%MSBuild\15.0\Bin\Roslyn;%VSInstallDir%MSBuild\15.0\Bin;%WindowsSdkDir%bin\%AE_UCRTVER%\x86;%WindowsSdkDir%bin\x86;%NETFXTools%;%VSInstallDir%Common7\Tools;%DevEnvDir%;C:\Windows\Microsoft.NET\Framework\v4.0.30319;%PATH%
+set LIB=%LIB%;%VCInstallDir%atlmfc\lib\x86;%VCInstallDir%lib\x86;%WindowsSdkDir%lib\%AE_UCRTVER%\ucrt\x86;%WindowsSdkDir%lib\%AE_UCRTVER%\um\x86;%NETFXSDK%Lib\um\x86
+set LIBPATH=%VCInstallDir%atlmfc\lib\x86;%VCInstallDir%lib\x86;%WindowsSdkDir%UnionMetadata\%AE_UCRTVER%;%WindowsSdkDir%References\%AE_UCRTVER%;%FrameworkDir%%FrameworkVersion%
+set IFCPATH=%VCInstallDir%ifc\x86
+set INCLUDE=%INCLUDE%;%VCInstallDir%atlmfc\include;%VCInstallDir%include;%NETFXSDK%include\um;%WindowsSdkDir%Include\%AE_UCRTVER%\ucrt;%WindowsSdkDir%include\%AE_UCRTVER%\um;%WindowsSdkDir%include\%AE_UCRTVER%\shared;%WindowsSdkDir%include\%AE_UCRTVER%\winrt
+REM
+rem if "%force%"=="yes" goto force_vc141
+cmp -s "%VCSettings%Microsoft.Cpp.Win32.user_Alan_vc141.props" "%VCSettings%Microsoft.Cpp.Win32.user.props"
+if %ERRORLEVEL% EQU 0 goto done
+:force_vc141
+cp "%VCSettings%Microsoft.Cpp.Win32.user_Alan_vc141.props" "%VCSettings%Microsoft.Cpp.Win32.user.props"
+rem BUG: Race condition causes Exit to occur before /ResetSettings
+rem start /wait devenv.exe /ResetSettings "%HomeVCSettings%Alan_vc141.vssettings" /Command Exit
+rem python "%HomeVCSettings%SpliceSettings.py" %1
+rem See C:\lbin\OLD\SpliceSettings.py -- Good example of XML parsing in Python
+if not "%silent%"=="yes" echo Environment varibles set for %VCName%, target x86.
+goto done
+rem --------------------------------------------------------------------------
+:vc141x64
+REM
+REM Set the build environment for VC141 (Visual Studio 2017) on x64
+REM
+set UCRTVersion=%AE_UCRTVER%
+set VCSettings=%VC14Settings%
+set HomeVCSettings=%HomeVC141Settings%
+set VCName=VS2017
+set VCVersion=15.0
+set VCLib=
+set VS150COMNTOOLS=E:\VS2017\Common7\Tools\
+set AMD64=1
+rem These env vars are required for msbuild /p:useenv=true
+Rem E:\MSSDK15 is a symlink to C:\Program Files (x86)\Windows Kits\10
+set WindowsSdkDir=C:\Program Files (x86)\Windows Kits\10\
+set FrameworkVersion=v4.0.30319
+set FrameworkVersion32=v4.0.30319
+set FrameworkVersion64=v4.0.30319
+set FrameworkDir=%SystemRoot%\Microsoft.NET\Framework64\
+set FrameworkSDKDir=%WindowsSdkDir%
+set VSInstallDir=%DevDrive%\%VCName%\
+set VCInstallDir=%VSInstallDir%VC\Tools\MSVC\%AE_VCTOOLS%\
+set DevEnvDir=%VSInstallDir%Common7\IDE\
+set NETFXTools=C:\Program Files (x86)\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\
+set NETFXSDK=C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6.1\
+rem
+rem Note: Use x64 .NET and NETFX Tools because the default x64 config now does
+set PATH=%VCInstallDir%bin\Hostx64\x64;%DevEnvDir%VC\VCPackages;%VSInstallDir%MSBuild\15.0\Bin\Roslyn;%VSInstallDir%MSBuild\15.0\Bin;;%WindowsSdkDir%bin\%AE_UCRTVER%\x64;%WindowsSdkDir%bin\x64;%NETFXTools%;%VSInstallDir%Common7\Tools;%DevEnvDir%;C:\Windows\Microsoft.NET\Framework64\v4.0.30319;%PATH%
+set LIB=%LIB%;%VCInstallDir%atlmfc\lib\x64;%VCInstallDir%lib\x64;%WindowsSdkDir%lib\%AE_UCRTVER%\ucrt\x64;%WindowsSdkDir%lib\%AE_UCRTVER%\um\x64;%NETFXSDK%Lib\um\x64
+set LIBPATH=%VCInstallDir%atlmfc\lib\x64;%VCInstallDir%lib\x64;%WindowsSdkDir%UnionMetadata\%AE_UCRTVER%;%WindowsSdkDir%References\%AE_UCRTVER%;%FrameworkDir%%FrameworkVersion%
+set IFCPATH=%VCInstallDir%ifc\x64
+set INCLUDE=%INCLUDE%;%VCInstallDir%atlmfc\include;%VCInstallDir%include;%NETFXSDK%include\um;%WindowsSdkDir%Include\%AE_UCRTVER%\ucrt;%WindowsSdkDir%include\%AE_UCRTVER%\um;%WindowsSdkDir%include\%AE_UCRTVER%\shared;%WindowsSdkDir%include\%AE_UCRTVER%\winrt
+REM
+if "%force%"=="yes" goto force_vc141x64
+cmp -s "%VCSettings%Microsoft.Cpp.x64.user_Alan_vc141.props" "%VCSettings%Microsoft.Cpp.x64.user.props"
+if %ERRORLEVEL% EQU 0 goto done
+:force_vc141x64
+cp "%VCSettings%Microsoft.Cpp.x64.user_Alan_vc141.props" "%VCSettings%Microsoft.Cpp.x64.user.props"
+rem BUG: Race condition causes Exit to occur before /ResetSettings
+rem start /wait devenv.exe /ResetSettings "%HomeVCSettings%Alan_vc141.vssettings" /Command Exit
 rem python "%HomeVCSettings%SpliceSettings.py" %1
 rem See C:\lbin\OLD\SpliceSettings.py -- Good example of XML parsing in Python
 if not "%silent%"=="yes" echo Environment varibles set for %VCName%, target x64.
@@ -888,15 +992,19 @@ set HomeVC9Settings=
 set HomeVC10Settings=
 set HomeVC12Settings=
 set HomeVC14Settings=
+set HomeVC141Settings=
 set HomeVCSettings=
 set WindowsSdkDir06=
-set WindowsSdkDir=
+rem set WindowsSdkDir=
 set DevEnvDir=
 set NETFXTools=
 set NETFXSDK=
 set VCName=
 set VCVersion=
 set VCLib=
+rem set VS140COMNTOOLS=
+rem set VS150COMNTOOLS=
+set IFCPATH=
 set REG32=
 set DevDrive=
 set VS6=

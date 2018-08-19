@@ -4,10 +4,8 @@
 #
 # Based on GNU FileUtils 4.1
 # 
-# Windows Extensions copyright (c) 2010-2015, U-Tools Software LLC
+# Windows Extensions copyright (c) 2010-2018, U-Tools Software LLC
 # Distributed under GNU General Public License version 2.
-#
-# $Id: Makefile,v 1.18 2015/05/11 20:37:24 cvsalan Exp $
 #
 
 

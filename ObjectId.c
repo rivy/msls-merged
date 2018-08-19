@@ -14,11 +14,9 @@
 //
 
 //
-// Copyright (c) 2007-2015, U-Tools Software LLC
+// Copyright (c) 2007-2018, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
-//
-// $Id: ObjectId.c,v 1.4 2015/05/09 08:49:57 cvsalan Exp $
 //
 
 #pragma warning(disable: 4305)  // truncated cast ok basetsd.h POINTER_64 - AEK

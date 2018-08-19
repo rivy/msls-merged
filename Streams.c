@@ -2,11 +2,9 @@
 //
 // Query for embedded file streams:  "foo.txt:mystream:$Type"
 //
-// Copyright (c) 2004-2015, U-Tools Software LLC
+// Copyright (c) 2004-2018, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
-//
-// $Id: Streams.c,v 1.10 2015/05/09 08:49:57 cvsalan Exp $
 //
 
 //

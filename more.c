@@ -1,11 +1,9 @@
 //
 // Wrap stdio for more-style pagination
 //
-// Copyright (c) 2004-2015, U-Tools Software LLC
+// Copyright (c) 2004-2018, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
-//
-// $Id: more.c,v 1.8 2015/05/11 20:37:24 cvsalan Exp $
 //
 
 //

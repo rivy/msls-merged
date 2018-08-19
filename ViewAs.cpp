@@ -1,13 +1,11 @@
 //////////////////////////////////////////////////////////////////////////
 //
-// View effective permissions for another user.  (--user=name)
+// ViewAs.cpp - View effective permissions for another user.  (--user=name)
 //
-// Copyright (c) 2004-2015, U-Tools Software LLC
+// Copyright (c) 2004-2018, U-Tools Software LLC
 // Written by Alan Klietz 
 //
 // Distributed under GNU General Public License version 2.
-//
-// $Id: ViewAs.cpp,v 1.5 2015/05/20 07:24:32 cvsalan Exp $
 //
 
 //

@@ -5,7 +5,7 @@ rem
 REM
 REM BUILD.CMD - Build and install msls
 REM
-REM $Id: BUILD.CMD,v 1.11 2014/09/06 23:02:47 cvsalan Exp $
+REM $Id: BUILD.CMD,v 1.13 2017/11/29 00:03:46 cvsalan Exp $
 REM
 choice /C DR /N /M "[D]ebug or [R]elease? "
 if errorlevel 2 set BLDTYPE=Release
@@ -57,16 +57,15 @@ rem has it built-in.  They specifically did _not_ patch Vista- or W2K8-.
 rem
 rem WORKAROUND: Double-sign all .EXEs with SHA-1 (primary) and SHA-2 (secondary)
 rem
-SET CERTCODEDIR=C:\crt\code16
-SET SIGNTOOL=E:\MSSDK15\bin\x64\signtool.exe
-SET CERTCODEPFX=%CERTCODEDIR%\certcode.pfx
-SET CERTCODEAC=%CERTCODEDIR%\ThawtePrimaryRootUnderPremium.cer
+call E:\ae\certvars.bat
+if errorlevel 1 exit /b 1
 SET TITLE="ls for Windows"
 rem
 set /P PASSPHRASE=Enter the passphrase? 
 %SIGNTOOL% sign /v /f %CERTCODEPFX% /fd sha1 /t "http://timestamp.verisign.com/scripts/timestamp.dll" /d %TITLE% /p %PASSPHRASE% /ac %CERTCODEAC% /du %URL% Release\ls.exe
 if errorlevel 1 goto done
-%SIGNTOOL% sign /v /as /f %CERTCODEPFX% /fd sha256 /tr "http://timestamp.geotrust.com/tsa" /td sha256 /d %TITLE% /p %PASSPHRASE% /ac %CERTCODEAC% /du %URL% Release\ls.exe
+sleep 3
+%SIGNTOOL% sign /v /as /f %CERTCODEPFX% /fd sha256 /tr "http://sha256timestamp.ws.symantec.com/sha256/timestamp" /td sha256 /d %TITLE% /p %PASSPHRASE% /ac %CERTCODEAC% /du %URL% Release\ls.exe
 if errorlevel 1 goto done
 copy /Y Release\ls.exe c:\lbin\ls.exe
 copy /Y Release\ls.exe c:\vmshared\ls.exe
@@ -119,11 +118,14 @@ set WZIPSE="%ProgramFiles(x86)%\wzipse\winzipse.exe"
 rem
 rem Sign the self-extracting .EXE with Authenticode Certificate
 rem
+sleep 3
 %SIGNTOOL% sign /v /f %CERTCODEPFX% /t "http://timestamp.verisign.com/scripts/timestamp.dll" /d %TITLE% /p %PASSPHRASE% /ac %CERTCODEAC% /du %URL% %PACKAGE%.exe
 if errorlevel 1 goto done
-%SIGNTOOL% sign /v /as /f %CERTCODEPFX% /fd sha256 /tr "http://timestamp.geotrust.com/tsa" /td sha256 /d %TITLE% /p %PASSPHRASE% /ac %CERTCODEAC% /du %URL% %PACKAGE%.exe
+sleep 3
+%SIGNTOOL% sign /v /as /f %CERTCODEPFX% /fd sha256 /tr "http://sha256timestamp.ws.symantec.com/sha256/timestamp" /td sha256 /d %TITLE% /p %PASSPHRASE% /ac %CERTCODEAC% /du %URL% %PACKAGE%.exe
 if errorlevel 1 goto done
 cd ..
 echo Build complete in DISTRIB_ZIP.
+echo To publish run \Releases\msls\PublishRelease.cmd
 :done
 endlocal

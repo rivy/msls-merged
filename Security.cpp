@@ -1,12 +1,10 @@
 //////////////////////////////////////////////////////////////////////////
 //
-// Security translation layer for WIN32
+// Security.cpp - Security translation layer for WIN32
 //
-// Copyright (c) 2007-2015, U-Tools Software LLC
+// Copyright (c) 2007-2018, U-Tools Software LLC
 // Written by Alan Klietz 
 // Distributed under GNU General Public License version 2.
-//
-// $Id: Security.cpp,v 1.23 2015/05/11 20:37:24 cvsalan Exp $
 //
 
 #define WIN32_LEAN_AND_MEAN
