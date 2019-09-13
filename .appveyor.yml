@@ -32,7 +32,7 @@ install:
 
 build_script:
   - ps: ;"[{0:HH:mm:ss}].build" -f $($mark = get-date; $mark)
-  - call "build.BAT"
+  - call "build.BAT" all
   - ps: ;"[{0:HH:mm:ss}].build" -f $($mark = get-date; $mark)
 
 test_script:
