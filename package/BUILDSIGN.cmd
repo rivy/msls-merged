@@ -22,7 +22,7 @@ rem
 set OUTDIR_LS=..\#build\ls\%target%.(cl@1200)
 set OUTDIR_DIRCOLORS=..\#build\dircolors\%target%.(cl@1200)
 cd ..
-call build.bat clean 
+call build.bat clean
 if errorlevel 1 goto done
 cd .\dbin
 if errorlevel 1 goto done
