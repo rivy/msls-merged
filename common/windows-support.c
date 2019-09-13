@@ -262,7 +262,7 @@ void AeTrace(LPCTSTR szFormat, ...)
 
     va_list args;
     va_start(args, szFormat);
-    iLen = wvsprintf(szText, szFormat, args);
+    iLen = vsprintf(szText, szFormat, args);
     va_end(args);
 
     if (iLen <= 0) {
