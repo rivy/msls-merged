@@ -1,15 +1,18 @@
-@setlocal enableextensions &:: required for %CD%
+@setLocal enableExtensions &:: required for %CD%
 @echo off
 
 :: style inspector ~ whitespace: test for nonconforming files in repository
 
-:: Copyright (C) 2016-2018 ~ Roy Ivy III
+:: Copyright (C) 2016-2019 ~ Roy Ivy III
 :: License: GPLv3 (see https://opensource.org/licenses/GPL-3.0 @@ http://archive.is/id3YT)
-:: * this software is provided for free, WITHOUT ANY EXPRESS OR IMPLIED WARRANTY (see the license for details)
+:: * this software is provided for free, WITHOUT ANY EXPRESSED OR IMPLIED WARRANTY (see the license for details)
+
+:: spell-checker:ignore (shell) COMSPEC ERRORLEVEL
+:: spell-checker:ignore CTYPE POSIX akefile makefile makefiles multiline
 
 :config
-set "_exclude_dir=(?i)[_.#]build|[.]git|[.]gpg|vendor"
-set "_exclude=(?i)[.]dll$|[.]exe$|[.]zip|README.mkd$"
+set "_exclude_dir=(?i)[_.#]build|[.]git|[.]gpg|vendor|[.]vscode"
+set "_exclude=(?i)[.]dll$|[.]exe$|[.]zip$"
 :config_done
 
 set _dp0=%~dp0.
@@ -43,13 +46,18 @@ if NOT "%ERRORLEVEL%" == "1" ( set ERROR=1 & echo ERR!: Makefiles found with TAB
 "%PCREGREP%" -I --exclude-dir "%_exclude_dir%" --exclude "%_exclude%" --count --files-with-matches --recursive "^[^\t]+\t" %dirs%
 if NOT "%ERRORLEVEL%" == "1" ( set ERROR=1 & echo ERR!: files found with TABs internal to text ^(and AFTER leading whitespace^) [file:#lines_matched] 1>&2 )
 
-:: 3. Test for non-LF line endings
-set "HAVE_NONLF_ERROR="
+:: 3. Test for non-LF line endings (CRLF EOLs ok for '*.{bat|cmd}' and 'README.mkd' [required for correct display of README with WinZip Self-Extractor])
+set "HAVE_EOL_ERROR="
 "%PCREGREP%" --buffer-size=1M -I --exclude-dir "%_exclude_dir%" --exclude "%_exclude%" -NLF --files-with-matches --multiline --recursive "\r[^\n]" %dirs%
-if NOT "%ERRORLEVEL%" == "1" ( set HAVE_NONLF_ERROR=1 & echo ## files found with CR line endings)
-"%PCREGREP%" --buffer-size=1M -I --exclude-dir "%_exclude_dir%" --exclude "%_exclude%" --exclude "(?i)\.bat$|\.cmd$" -NLF --files-with-matches --multiline --recursive "\r\n" %dirs%
-if NOT "%ERRORLEVEL%" == "1" ( set HAVE_NONLF_ERROR=1 & echo ## files found with CRLF line endings)
-if DEFINED HAVE_NONLF_ERROR ( set ERROR=1 & echo ERR!: files found with non-LF line endings 1>&2 )
+if NOT "%ERRORLEVEL%" == "1" ( set HAVE_EOL_ERROR=1 & echo ## files found with CR line endings)
+"%PCREGREP%" --buffer-size=1M -I --exclude-dir "%_exclude_dir%" --exclude "%_exclude%" --exclude "README.mkd" --exclude "(?i)\.bat$|\.cmd$" -NLF --files-with-matches --multiline --recursive "\r\n" %dirs%
+if NOT "%ERRORLEVEL%" == "1" ( set HAVE_EOL_ERROR=1 & echo ## files found with CRLF line endings)
+
+:: 3a. Require CRLF line endings for '*.{bat|cmd}' and 'README.mkd' [required for correct display of README with WinZip Self-Extractor]
+"%PCREGREP%" --buffer-size=1M -I --exclude-dir "%_exclude_dir%" --include "README.mkd" --include "(?i)\.bat$|\.cmd$" -NLF --files-with-matches --invert-match --multiline --recursive "\r\n" %dirs%
+if NOT "%ERRORLEVEL%" == "1" ( set HAVE_EOL_ERROR=1 & echo ## files requiring CRLF EOL found with non-CRLF line endings)
+
+if DEFINED HAVE_EOL_ERROR ( set ERROR=1 & echo ERR!: files found with non-LF line endings 1>&2 )
 
 :: 4. Test for files without trailing newline
 :: "%PCREGREP%" -I --exclude-dir "%_exclude_dir%" --exclude "%_exclude%" --files-without-match --multiline --recursive "\r?[\r\n]\z" %dirs%
