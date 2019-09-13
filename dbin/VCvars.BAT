@@ -1,12 +1,16 @@
 :: setup Visual C/C++ command line build environment
 
-:: Copyright (C) 2016-2018 ~ Roy Ivy III
+:: Copyright (C) 2016-2020 ~ Roy Ivy III
 :: License: GPLv3 (see https://opensource.org/licenses/GPL-3.0 @@ http://archive.is/id3YT)
 :: * this software is provided for free, WITHOUT ANY EXPRESS OR IMPLIED WARRANTY (see the license for details)
 
 :: ToDO: add support for `vswhere` for versions >= 2016 (VC15+); eg, `vswhere -property installationPath`
 
-@setlocal
+:: spell-checker:ignore (shell) nmake vcvarsall vcvarsx vswhere
+:: spell-checker:ignore MAINT RETval RETvar bugfix fname popd pushd showall
+:: spell-checker:ignore COMNTOOLS Cvars Cvarsall FSHARPINSTALLDIR HKLM LIBPATH MSVC MSVS Toolset VCINSTALLDIR VCVAR VCVARSARGS VCVERSION VCvars VCvarsall VSINSTALLDIR
+
+@setLocal
 @echo off
 set "__dp0=%~dp0"
 set "__ME=%~n0"
@@ -14,7 +18,7 @@ cd "%~dp0"
 goto :_START
 
 :$usage
-echo %~nx0 [OPTIONS] [VCVERSION ^| PATH] [VCVARSARGS]
+echo %~nx0 [OPTIONS] [( VCVERSION ^| PATH ) [VCVARSARGS]]
 echo:
 echo OPTIONS
 echo help/usage :: -?, -h, --help, --usage
@@ -25,15 +29,15 @@ echo show-all   :: --list, --list-all, --show, --show-all
 echo quiet      :: --quiet
 echo:
 echo VCVERSION = latest
-echo             6 ^| 6min ^| 7 ^| 8 ^| 9 ^| 10 ^| 11 ^| 12 ^| 14 ^| 15
-echo             vc6 ^| vc6min ^| vc7 ^| vc8 ^| vc9 ^| vc10 ^| vc11 ^| vc12 ^| vc14 ^| vc15 ^| vc2017
-echo             vs6 ^| vs6min ^| vs7 ^| vs8 ^| vs9 ^| vs10 ^| vs11 ^| vs12 ^| vs14 ^| vs15 ^| vc2017
-echo             1998 ^| 2002 ^| 2003 ^| 2005 ^| 2010 ^| 2012 ^| 2013 ^| 2015 ^| 2016 ^| 2017
-echo             CL1200 ^| CL1300 ^| CL1310 ^| CL1400 ^| CL1500 ^| CL1600 ^| CL1700 ^| CL1800 ^| CL1900 ^| CL1911
+echo             6 ^| 6-min ^| 7 ^| 7.1 ^| 8 ^| 9 ^| 10 ^| 11 ^| 12 ^| 14 ^| 15 ^| 16
+echo             vc6 ^| vc6-min ^| vc7 ^| vc7.1 ^| vc8 ^| vc9 ^| vc10 ^| vc11 ^| vc12 ^| vc14 ^| vc15 ^| vc2017 ^| vc16 ^| vc2019
+echo             vs6 ^| vs6-min ^| vs7 ^| vs7.1 ^| vs8 ^| vs9 ^| vs10 ^| vs11 ^| vs12 ^| vs14 ^| vs15 ^| vc2017 ^| vs16 ^| vc2019
+echo             1998 ^| 2002 ^| 2003 ^| 2005 ^| 2010 ^| 2012 ^| 2013 ^| 2015 ^| 2016 ^| 2017 ^| 2019
+echo             CL1200 ^| CL1300 ^| CL1310 ^| CL1400 ^| CL1500 ^| CL1600 ^| CL1700 ^| CL1800 ^| CL1900 ^| CL1911 ^| CL1922
 echo:
 echo NOTE: 1998 == CL1200 == VC6; 2002 == CL1300 == VC7; 2003 == CL1310 == VC7.1; 2005 == CL1400 == VC8
 echo   ... 2008 == CL1500 == VC9; 2010 == CL1600 == VC10; 2012 == CL1700 == VC11; 2013 == CL1800 == VC12
-echo   ... 2015 == CL1900 == VC14; 2016 == VC15; 2017 == CL1911 == VC2017
+echo   ... 2015 == CL1900 == VC14; 2016 == VC15; 2017 == CL1911 == VC2017; 2019 == CL1922 = VC2019
 echo:
 echo VCVARSARGS = x86 ^| x64 ^| amd64 ^| ia64 ^| x86_amd64 ^| x86_ia64
 echo:
@@ -55,8 +59,8 @@ goto :EOF
 ::         # use VCVARS to skip lookup and specify desired C/C++ environment setup; generally used when multiple versions of VC are installed [or a version without registry entries installed in non-default location]
 
 :: REFERENCES
-:: VCVARSALL.bat (for 32- or 64-bit command-line builds): URLref: [How to: Enable a 64-Bit Visual C++ Toolset at the Command Line] http://msdn.microsoft.com/en-us/library/x4d2c09s(VS.80).aspx @@ https://archive.is/J0MGG
-:: VCVARS32.bat  (for 32-bit command-line builds): URLref: [Setting the Path and Environment Variables for Command-Line Builds] http://msdn.microsoft.com/en-us/library/f2ccy3wt(VS.80).aspx @@ https://archive.is/tsGjd
+:: VCVARSALL.bat (for 32- or 64-bit command-line builds): ref: [How to: Enable a 64-Bit Visual C++ Toolset at the Command Line] http://msdn.microsoft.com/en-us/library/x4d2c09s(VS.80).aspx @@ https://archive.is/J0MGG
+:: VCVARS32.bat  (for 32-bit command-line builds): ref: [Setting the Path and Environment Variables for Command-Line Builds] http://msdn.microsoft.com/en-us/library/f2ccy3wt(VS.80).aspx @@ https://archive.is/tsGjd
 
 :_START
 call :$$echo_DEBUG [ %~nx0 ]
@@ -83,7 +87,7 @@ call :$$echo_DEBUG arg_list = "%arg_list%"
 ::
 if DEFINED arg_list call :$$first_list_match __help "-?;-h;--help;--usage" "%arg_list%"
 if DEFINED __help ( call :$usage & exit /b 1 )
-:: (sorted by estimated descending probability of occurance)
+:: (sorted by estimated descending probability of occurrence)
 if DEFINED arg_list call :$$first_list_match __showall "--list;--list-all;--show;--show-all" "%arg_list%"
 if DEFINED __showall ( call :$$remove_from_list arg_list "%__showall%" "%arg_list%" )
 if DEFINED arg_list call :$$first_list_match __force "--force" "%arg_list%"
@@ -139,60 +143,69 @@ set "_csv_val=true"
 if DEFINED __prior set "_csv_val="
 if /i [%arg%]==[latest] ( call :$shift_args args %args% & goto :VCVARS_find )
 ::
-if /i [%arg%]==[6]      ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6 )
-if /i [%arg%]==[vc6]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6 )
-if /i [%arg%]==[vs6]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6 )
-if /i [%arg%]==[1998]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6 )
-if /i [%arg%]==[CL1200] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6 )
-if /i [%arg%]==[6min]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6min )
-if /i [%arg%]==[vc6min] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6min )
-if /i [%arg%]==[vs6min] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6min )
-if /i [%arg%]==[7]      ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7 )
-if /i [%arg%]==[vc7]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7 )
-if /i [%arg%]==[vs7]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7 )
-if /i [%arg%]==[2002]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7 )
-if /i [%arg%]==[2003]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7 )
-if /i [%arg%]==[CL1300] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7 )
-if /i [%arg%]==[CL1310] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7 )
-if /i [%arg%]==[8]      ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_8 )
-if /i [%arg%]==[vc8]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_8 )
-if /i [%arg%]==[vs8]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_8 )
-if /i [%arg%]==[2005]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_8 )
-if /i [%arg%]==[CL1400] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_8 )
-if /i [%arg%]==[9]      ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_9 )
-if /i [%arg%]==[vc9]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_9 )
-if /i [%arg%]==[vs9]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_9 )
-if /i [%arg%]==[2008]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_9 )
-if /i [%arg%]==[CL1500] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_9 )
-if /i [%arg%]==[10]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_10 )
-if /i [%arg%]==[vc10]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_10 )
-if /i [%arg%]==[vs10]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_10 )
-if /i [%arg%]==[2010]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_10 )
-if /i [%arg%]==[CL1600] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_10 )
-if /i [%arg%]==[11]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_11 )
-if /i [%arg%]==[vc11]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_11 )
-if /i [%arg%]==[vs11]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_11 )
-if /i [%arg%]==[2012]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_11 )
-if /i [%arg%]==[CL1700] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_11 )
-if /i [%arg%]==[12]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_12 )
-if /i [%arg%]==[vc12]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_12 )
-if /i [%arg%]==[vs12]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_12 )
-if /i [%arg%]==[2013]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_12 )
-if /i [%arg%]==[CL1800] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_12 )
-if /i [%arg%]==[14]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_14 )
-if /i [%arg%]==[vc14]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_14 )
-if /i [%arg%]==[vs14]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_14 )
-if /i [%arg%]==[2015]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_14 )
-if /i [%arg%]==[CL1900] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_14 )
-if /i [%arg%]==[2016]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_15_0 )
-if /i [%arg%]==[15]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_15 )
-if /i [%arg%]==[vc15]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_15 )
-if /i [%arg%]==[vs15]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_15 )
-if /i [%arg%]==[15_3]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_15_3 )
-if /i [%arg%]==[2017]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_2017 )
-if /i [%arg%]==[vc2017] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_2017 )
-if /i [%arg%]==[vs2017] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_2017 )
-if /i [%arg%]==[CL1911] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_2017 )
+if /i [%arg%]==[6]       ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6 )
+if /i [%arg%]==[vc6]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6 )
+if /i [%arg%]==[vs6]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6 )
+if /i [%arg%]==[1998]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6 )
+if /i [%arg%]==[CL1200]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6 )
+if /i [%arg%]==[6-min]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6_min )
+if /i [%arg%]==[vc6-min] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6_min )
+if /i [%arg%]==[vs6-min] ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_6_min )
+if /i [%arg%]==[7]       ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7 )
+if /i [%arg%]==[vc7]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7 )
+if /i [%arg%]==[vs7]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7 )
+if /i [%arg%]==[2002]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7 )
+if /i [%arg%]==[CL1300]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7 )
+if /i [%arg%]==[7.1]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7_1 )
+if /i [%arg%]==[vc7.1]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7_1 )
+if /i [%arg%]==[vs7.1]   ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7_1 )
+if /i [%arg%]==[2003]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7_1 )
+if /i [%arg%]==[CL1310]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_7_1 )
+if /i [%arg%]==[8]       ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_8 )
+if /i [%arg%]==[vc8]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_8 )
+if /i [%arg%]==[vs8]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_8 )
+if /i [%arg%]==[2005]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_8 )
+if /i [%arg%]==[CL1400]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_8 )
+if /i [%arg%]==[9]       ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_9 )
+if /i [%arg%]==[vc9]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_9 )
+if /i [%arg%]==[vs9]     ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_9 )
+if /i [%arg%]==[2008]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_9 )
+if /i [%arg%]==[CL1500]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_9 )
+if /i [%arg%]==[10]      ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_10 )
+if /i [%arg%]==[vc10]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_10 )
+if /i [%arg%]==[vs10]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_10 )
+if /i [%arg%]==[2010]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_10 )
+if /i [%arg%]==[CL1600]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_10 )
+if /i [%arg%]==[11]      ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_11 )
+if /i [%arg%]==[vc11]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_11 )
+if /i [%arg%]==[vs11]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_11 )
+if /i [%arg%]==[2012]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_11 )
+if /i [%arg%]==[CL1700]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_11 )
+if /i [%arg%]==[12]      ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_12 )
+if /i [%arg%]==[vc12]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_12 )
+if /i [%arg%]==[vs12]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_12 )
+if /i [%arg%]==[2013]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_12 )
+if /i [%arg%]==[CL1800]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_12 )
+if /i [%arg%]==[14]      ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_14 )
+if /i [%arg%]==[vc14]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_14 )
+if /i [%arg%]==[vs14]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_14 )
+if /i [%arg%]==[2015]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_14 )
+if /i [%arg%]==[CL1900]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_14 )
+if /i [%arg%]==[2016]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_15_0 )
+if /i [%arg%]==[15]      ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_15 )
+if /i [%arg%]==[vc15]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_15 )
+if /i [%arg%]==[vs15]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_15 )
+if /i [%arg%]==[2017]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_2017 )
+if /i [%arg%]==[vc2017]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_2017 )
+if /i [%arg%]==[vs2017]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_2017 )
+if /i [%arg%]==[CL1911]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_2017 )
+if /i [%arg%]==[16]      ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_16 )
+if /i [%arg%]==[vc16]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_16 )
+if /i [%arg%]==[vs16]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_16 )
+if /i [%arg%]==[2019]    ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_2019 )
+if /i [%arg%]==[vc2019]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_2019 )
+if /i [%arg%]==[vs2019]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_2019 )
+if /i [%arg%]==[CL1922]  ( set "_check_single_version=%_csv_val%" & call :$shift_args args %args% & goto :VCVARS_find_2019 )
 ::
 if EXIST "%arg%" ( set "VCVARS=%arg%" & call :$shift_args args %args% & goto :VCVARS_file_find_DONE ) else (
     if DEFINED arg (
@@ -202,23 +215,65 @@ if EXIST "%arg%" ( set "VCVARS=%arg%" & call :$shift_args args %args% & goto :VC
 
 :: VCVARS_find
 :VCVARS_find
+:VCVARS_find_16
+:VCVARS_find_2019
+set "VCvars_version=VC2019" & set "VCvars_year=2019"
+set "base_path=%ProgramFiles%\Microsoft Visual Studio\2019"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Enterprise\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Professional\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Community\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\BuildTools\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Preview\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Common7\IDE\VC"
+set "base_path=%ProgramFiles(x86)%\Microsoft Visual Studio\2019"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Enterprise\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Professional\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Community\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\BuildTools\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Preview\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Common7\IDE\VC"
+:VCVARS_find_2019_DONE
+if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"] & goto VCVARS_find_15 )
+if DEFINED _check_single_version ( goto :VCVARS_find_DONE )
+if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 :VCVARS_find_15
 :VCVARS_find_15_3
 :VCVARS_find_2017
-set VCVARS_version=VC2017
+set "VCvars_version=VC2017" & set "VCvars_year=2017"
+set "base_path=%ProgramFiles%\Microsoft Visual Studio\2017"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Enterprise\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Professional\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Community\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\BuildTools\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Preview\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Common7\IDE\VC"
 set "base_path=%ProgramFiles(x86)%\Microsoft Visual Studio\2017"
 if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Enterprise\VC\Auxiliary\Build"
 if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Professional\VC\Auxiliary\Build"
 if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Community\VC\Auxiliary\Build"
 if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\BuildTools\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Preview\VC\Auxiliary\Build"
 if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Common7\IDE\VC"
 :VCVARS_find_2017_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCVARS_version% ["%VCVARS%"] & goto VCVARS_find_15_0 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"] & goto VCVARS_find_15_0 )
 if DEFINED _check_single_version ( goto :VCVARS_find_DONE )
 if DEFINED VCVARS goto :VCVARS_find_DONE
 :VCVARS_find_15_0
-set VCVARS_version=VC15
+set "VCvars_version=vc15" & set "VCvars_year=2016"
+set "base_path=%ProgramFiles%\Microsoft Visual Studio\VS15"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Enterprise\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Professional\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Community\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\BuildTools\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Common7\IDE\VC"
+set "base_path=%ProgramFiles%\Microsoft Visual Studio\VS15Preview"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Enterprise\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Professional\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Community\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\BuildTools\VC\Auxiliary\Build"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Common7\IDE\VC"
 set "base_path=%ProgramFiles(x86)%\Microsoft Visual Studio\VS15"
 if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Enterprise\VC\Auxiliary\Build"
 if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Professional\VC\Auxiliary\Build"
@@ -233,11 +288,15 @@ if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\BuildTools\VC\Au
 if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%base_path%\Common7\IDE\VC"
 :VCVARS_find_15_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCVARS_version% ["%VCVARS%"] & goto VCVARS_find_14 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"] & goto VCVARS_find_14 )
 if DEFINED _check_single_version ( goto :VCVARS_find_DONE )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 :VCVARS_find_14
-set VCVARS_version=VC14
+set "VCvars_version=vc14" & set "VCVARS_year=2015"
+call :$$echo_DEBUG [ testing VCVARS_version=%VCVARS_version%; VCVARS=%VCVARS% ]
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%VS140COMNTOOLS%\..\..\VC"
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_12 )
+if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\14.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
 set _cmd="%_cmd%"
@@ -248,7 +307,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc14 ["%VCVARS%"]& goto VCVARS_find_12 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_12 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\14.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -262,7 +321,7 @@ for /f "tokens=1,2*" %%A in (
     )
 :VCVARS_find_14_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc14 ["%VCVARS%"]& goto VCVARS_find_12 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_12 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VCExpress\14.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -274,7 +333,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc14 ["%VCVARS%"]& goto VCVARS_find_12 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_12 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VCExpress\14.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -287,11 +346,15 @@ for /f "tokens=1,2*" %%A in (
     )
 :VCVARS_find_14e_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc14 ["%VCVARS%"]& goto VCVARS_find_12 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_12 )
 if DEFINED _check_single_version ( goto :VCVARS_find_DONE )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 :VCVARS_find_12
-set VCVARS_version=VC12
+set "VCvars_version=vc12" & set "VCVARS_year=2013"
+call :$$echo_DEBUG [ testing VCVARS_version=%VCVARS_version%; VCVARS=%VCVARS% ]
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%VS120COMNTOOLS%\..\..\VC"
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_11 )
+if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\12.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
 set _cmd="%_cmd%"
@@ -302,7 +365,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc12 ["%VCVARS%"]& goto VCVARS_find_11 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_11 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\12.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -316,7 +379,7 @@ for /f "tokens=1,2*" %%A in (
     )
 :VCVARS_find_12_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc12 ["%VCVARS%"]& goto VCVARS_find_11 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_11 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VCExpress\12.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -328,7 +391,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc12 ["%VCVARS%"]& goto VCVARS_find_11 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_11 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VCExpress\12.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -341,11 +404,15 @@ for /f "tokens=1,2*" %%A in (
     )
 :VCVARS_find_12e_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc12 ["%VCVARS%"]& goto VCVARS_find_11 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_11 )
 if DEFINED _check_single_version ( goto :VCVARS_find_DONE )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 :VCVARS_find_11
-set VCVARS_version=VC11
+set "VCvars_version=vc11" & set "VCVARS_year=2012"
+call :$$echo_DEBUG [ testing VCVARS_version=%VCVARS_version%; VCVARS=%VCVARS% ]
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%VS110COMNTOOLS%\..\..\VC"
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_10 )
+if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\11.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
 set _cmd="%_cmd%"
@@ -356,7 +423,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc11 ["%VCVARS%"]& goto VCVARS_find_10 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_10 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\11.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -370,7 +437,7 @@ for /f "tokens=1,2*" %%A in (
     )
 :VCVARS_find_11_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc11 ["%VCVARS%"]& goto VCVARS_find_10 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_10 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VCExpress\11.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -382,7 +449,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc11 ["%VCVARS%"]& goto VCVARS_find_10 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_10 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VCExpress\11.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -395,11 +462,15 @@ for /f "tokens=1,2*" %%A in (
     )
 :VCVARS_find_11e_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc11 ["%VCVARS%"]& goto VCVARS_find_10 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_10 )
 if DEFINED _check_single_version ( goto :VCVARS_find_DONE )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 :VCVARS_find_10
-set VCVARS_version=VC10
+set "VCvars_version=vc10" & set "VCvars_year=2010"
+call :$$echo_DEBUG [ testing VCVARS_version=%VCVARS_version%; VCVARS=%VCVARS% ]
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%VS100COMNTOOLS%\..\..\VC"
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_9 )
+if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\10.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
 set _cmd="%_cmd%"
@@ -410,7 +481,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc10 ["%VCVARS%"]& goto VCVARS_find_9 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_9 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\10.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -424,7 +495,7 @@ for /f "tokens=1,2*" %%A in (
     )
 :VCVARS_find_10_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc10 ["%VCVARS%"]& goto VCVARS_find_9 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_9 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VCExpress\10.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -436,7 +507,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc10 ["%VCVARS%"]& goto VCVARS_find_9 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_9 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VCExpress\10.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -449,11 +520,15 @@ for /f "tokens=1,2*" %%A in (
     )
 :VCVARS_find_10e_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc10 ["%VCVARS%"]& goto VCVARS_find_9 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_9 )
 if DEFINED _check_single_version ( goto :VCVARS_find_DONE )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 :VCVARS_find_9
-set VCVARS_version=VC9
+set "VCvars_version=vc9" & set "VCvars_year=2008"
+call :$$echo_DEBUG [ testing VCVARS_version=%VCVARS_version%; VCVARS=%VCVARS% ]
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%VS90COMNTOOLS%\..\..\VC"
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_8 )
+if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\9.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
 set _cmd="%_cmd%"
@@ -464,7 +539,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc9 ["%VCVARS%"]& goto VCVARS_find_8 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_8 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\9.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -478,7 +553,7 @@ for /f "tokens=1,2*" %%A in (
     )
 :VCVARS_find_9_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc9 ["%VCVARS%"]& goto VCVARS_find_8 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_8 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VCExpress\9.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -490,7 +565,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc9 ["%VCVARS%"]& goto VCVARS_find_8 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_8 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VCExpress\9.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -503,16 +578,17 @@ for /f "tokens=1,2*" %%A in (
     )
 :VCVARS_find_9e_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc9 ["%VCVARS%"]& goto VCVARS_find_8 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_8 )
 if DEFINED _check_single_version ( goto :VCVARS_find_DONE )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 :VCVARS_find_8
-set VCVARS_version=VC8
+set "VCvars_version=vc8" & set "VCvars_year=2005"
 call :$$echo_DEBUG [ testing VCVARS_version=%VCVARS_version%; VCVARS=%VCVARS% ]
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%VS80COMNTOOLS%\..\..\VC"
 if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles%\Microsoft Visual Studio 8\VC"
 if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles(x86)%\Microsoft Visual Studio 8\VC"
 call :$$echo_DEBUG [ VCVARS=%VCVARS%]
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc8 ["%VCVARS%"]& goto VCVARS_find_7 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_7_1 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\8.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -524,7 +600,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc8 ["%VCVARS%"]& goto VCVARS_find_7 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_7_1 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\8.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -537,7 +613,7 @@ for /f "tokens=1,2*" %%A in (
     )
 :VCVARS_find_8_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc8 ["%VCVARS%"]& goto VCVARS_find_7 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_7_1 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VCExpress\8.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -549,7 +625,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc8 ["%VCVARS%"]& goto VCVARS_find_7 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_7_1 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VCExpress\8.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -562,12 +638,15 @@ for /f "tokens=1,2*" %%A in (
     )
 :VCVARS_find_8e_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc8 ["%VCVARS%"]& goto VCVARS_find_7 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_7_1 )
 if DEFINED _check_single_version ( goto :VCVARS_find_DONE )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
-:VCVARS_find_7
-set VCVARS_version=VC7
+:VCVARS_find_7_1
+set "VCvars_version=vc7.1" & set "VCvars_year=2003"
 call :$$echo_DEBUG [ testing VCVARS_version=%VCVARS_version%; VCVARS=%VCVARS% ]
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%VS71COMNTOOLS%\..\..\VC"
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_7 )
+if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\7.1\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
 set _cmd="%_cmd%"
@@ -578,7 +657,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc7 ["%VCVARS%"]& goto VCVARS_find_6 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_7 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\7.1\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -596,9 +675,16 @@ if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%VCToolkitInstallDir%"
 if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles%\Microsoft Visual C++ Toolkit 2003"
 call :$$echo_DEBUG [ VCVARS=%VCVARS%]
 :VCVARS_find_7_1t_DONE
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc7 ["%VCVARS%"]& goto VCVARS_find_6 )
+if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_7 )
+if DEFINED _check_single_version ( goto :VCVARS_find_DONE )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
+:VCVARS_find_7
+set "VCvars_version=vc7" & set "VCvars_year=2002"
 call :$$echo_DEBUG [ testing VCVARS_version=%VCVARS_version% 7.1t; VCVARS=%VCVARS% ]
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%VS70COMNTOOLS%\..\..\VC"
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_6 )
+if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\7.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
 set _cmd="%_cmd%"
@@ -609,7 +695,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc7 ["%VCVARS%"]& goto VCVARS_find_6 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_6 )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\7.0\Setup\VC" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -622,12 +708,15 @@ for /f "tokens=1,2*" %%A in (
     )
 :VCVARS_find_7_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc7 ["%VCVARS%"]& goto VCVARS_find_6 )
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_6 )
 if DEFINED _check_single_version ( goto :VCVARS_find_DONE )
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 :VCVARS_find_6
-set VCVARS_version=VC6
+set "VCvars_version=vc6" & set "VCvars_year=1998"
 call :$$echo_DEBUG [ testing VCVARS_version=%VCVARS_version% ]
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%VS60COMNTOOLS%\..\..\VC"
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_6_DONE)
+if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\VisualStudio\6.0\Setup\Microsoft Visual C++" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
 set _cmd="%_cmd%"
@@ -638,7 +727,7 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc6 ["%VCVARS%"]& goto VCVARS_find_6_DONE)
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_6_DONE)
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 set _cmd="%SystemRoot%\system32\reg" query "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\VisualStudio\6.0\Setup\Microsoft Visual C++" /v "ProductDir" 2^> nul
 :: CMD needs surrounding quotes
@@ -650,25 +739,26 @@ for /f "tokens=1,2*" %%A in (
         SET "VCVARS=%%C"
     )
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc6 ["%VCVARS%"]& goto VCVARS_find_6_DONE)
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"]& goto VCVARS_find_6_DONE)
 if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 :: ALTERNATE/minimal installation of Visual C++ 6 (VC6min)
 :: search common installation paths: %LocalAppData%\scoop\apps\msvc\6\VC6; %LocalAppData%\MSVC-portable\VC6; %SystemDrive%\VC6; %ProgramFiles%\VC6; %ProgramFiles%\VisualC; %ProgramFiles%\VisualC6
-:VCVARS_find_6min
-if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%LocalAppData%\scoop\apps\msvc\6\VC6\bin\vcvars32.BAT"
-if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%LocalAppData%\scoop\apps\msvc\6.0\VC6\bin\vcvars32.BAT"
-if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%LocalAppData%\MSVC-portable\VC6\bin\vcvars32.BAT"
-if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%SystemDrive%\VC6\bin\vcvars32.BAT"
-if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles%\VC6\bin\vcvars32.BAT"
-if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles%\VisualC\bin\vcvars32.BAT"
-if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles%\VisualC6\bin\vcvars32.BAT"
-if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles(x86)%\VC6\bin\vcvars32.BAT"
-if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles(x86)%\VisualC\bin\vcvars32.BAT"
-if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles(x86)%\VisualC6\bin\vcvars32.BAT"
-:VCVARS_find_6min_DONE
+:VCVARS_find_6_min
+set "VCvars_version=vc6" & set "VCvars_year=1998"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%LocalAppData%\scoop\apps\msvc\6.0\VC\vcvars32.BAT"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%LocalAppData%\MSVC-portable\VC6\vcvars32.BAT"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%LocalAppData%\MSVC-portable\VC\vcvars32.BAT"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%SystemDrive%\VC6\vcvars32.BAT"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles%\VC6\vcvars32.BAT"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles%\VisualC\vcvars32.BAT"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles%\VisualC6\vcvars32.BAT"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles(x86)%\VC6\vcvars32.BAT"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles(x86)%\VisualC\vcvars32.BAT"
+if NOT DEFINED VCVARS call :$VARS_file_path VCVARS "%ProgramFiles(x86)%\VisualC6\vcvars32.BAT"
+:VCVARS_find_6_min_DONE
 :VCVARS_find_6_DONE
 if DEFINED VCVARS call :$VARS_file_path VCVARS "%VCVARS%"
-if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo vc6 ["%VCVARS%"])
+if DEFINED __showall if DEFINED VCVARS ( set "VCVARS=" & echo %VCvars_version% [%VCvars_year%; "%VCVARS%"])
 :: if DEFINED _check_single_version ( goto :VCVARS_find_DONE )
 :: if NOT "%VCVARS%"=="" goto :VCVARS_find_DONE
 :VCVARS_find_DONE
@@ -696,10 +786,10 @@ if NOT EXIST "%VCVARS%" (
     )
 
 :VCVARS_env
-if NOT DEFINED VCVARS_version (
+if NOT DEFINED VCvars_version (
     if NOT "%VCVARS_ARE_SET%" == "1" (
-        set VCVARS_version=%VCVARS_ARE_SET%
-    ) else set VCVARS_version=VC?
+        set VCvars_version=%VCVARS_ARE_SET%
+    ) else set VCvars_version=VC?
 )
 if NOT DEFINED VCVARS ( goto :VCVARS_no_call )
 :: skip the call if VCVARS_ARE_SET unless FORCE
@@ -707,12 +797,13 @@ if NOT DEFINED VCVARS_ARE_SET ( goto :VCVARS_call )
 if DEFINED __force ( goto :VCVARS_call )
 :VCVARS_no_call
 call :$$echo_DEBUG no VCVARS call
-( endlocal
+( endLocal
     set __VCVARS_message=no changes
     set __VCvars_ME=%__ME%
     set __VCvars_echo=%__echo%
     set __VCvars_quiet=%__quiet%
-    set __VCVARS_version=%VCVARS_ARE_SET%
+    set VCvars_version=%VCvars_version%
+    set VCvars_year=%VCvars_year%
     )
 goto :VCVARS_env_DONE
 
@@ -720,13 +811,18 @@ goto :VCVARS_env_DONE
 :: bugfix for VC14 bug (`rc` missing / not on PATH)
 :: ref: https://stackoverflow.com/questions/14372706/visual-studio-cant-build-due-to-rc-exe/46166632#46166632 @@ https://archive.is/6HPIG#19.25%
 :: ref: https://stackoverflow.com/questions/43847542/rc-exe-no-longer-found-in-vs-2015-command-prompt/45319119 @@ https://archive.is/GuODI
-if "%VCVARS_version%"=="VC14" if NOT DEFINED args ( set "args=x86 8.1" )
-if "%VCVARS_version%"=="VC14" if "%args%"=="x86" ( set "args=%args% 8.1" )
-if "%VCVARS_version%"=="VC14" if "%args%"=="amd64" ( set "args=%args% 8.1" )
+if /i "%VCVARS_version%"=="VC14" if NOT DEFINED args ( set "args=x86 8.1" )
+if /i "%VCVARS_version%"=="VC14" if /i "%args%"=="x86" ( set "args=%args% 8.1" )
+if /i "%VCVARS_version%"=="VC14" if /i "%args%"=="x64" ( set "args=%args% 8.1" )
+if /i "%VCVARS_version%"=="VC14" if /i "%args%"=="amd64" ( set "args=%args% 8.1" )
+if /i "%VCVARS_version%"=="VC14" if /i "%args%"=="ia64" ( set "args=%args% 8.1" )
+if /i "%VCVARS_version%"=="VC14" if /i "%args%"=="x86_amd64" ( set "args=%args% 8.1" )
+if /i "%VCVARS_version%"=="VC14" if /i "%args%"=="x86_ia64" ( set "args=%args% 8.1" )
 ::
+
 if NOT DEFINED args ( set "args=x86" )
 call :$$echo_DEBUG call "%VCVARS%" %args%
-( endlocal
+( endLocal
     pushd .
     call "%VCVARS%" %args% >NUL
     popd
@@ -734,7 +830,8 @@ call :$$echo_DEBUG call "%VCVARS%" %args%
     set __VCvars_ME=%__ME%
     set __VCvars_echo=%__echo%
     set __VCvars_quiet=%__quiet%
-    set __VCVARS_version=%VCVARS_version%
+    set VCvars_version=%VCvars_version%
+    set VCvars_year=%VCvars_year%
     )
 
 :: increase compatibility between VC6 and later version environment variables
@@ -742,12 +839,12 @@ if NOT DEFINED MSVCDir          (set "MSVCDir=%VCINSTALLDIR%")
 if NOT DEFINED VCINSTALLDIR     (set "VCINSTALLDIR=%MSVCDir%")
 
 :VCVARS_env_DONE
-( setlocal
+( setLocal
     set __ME=%__VCvars_ME%
     call :$$echo_DEBUG MAKE = "%MAKE%"
     call :$$echo_DEBUG MSVCDir = "%MSVCDir%"
     call :$$echo_DEBUG VCINSTALLDIR = "%VCINSTALLDIR%"
-endlocal
+endLocal
 )
 
 :: check setup for correctness
@@ -781,7 +878,7 @@ set "__NMAKE_exe="
 
 :: set confirmation environment variable
 if %ERRORLEVEL% EQU 0 (
-    set VCVARS_ARE_SET=%__VCVARS_version%
+    set VCVARS_ARE_SET=%VCvars_version%
     if NOT DEFINED VCVARS_ARE_SET (set VCVARS_ARE_SET=1)
     )
 
@@ -789,14 +886,13 @@ if %ERRORLEVEL% EQU 0 (
 if NOT defined __VCvars_echo ( goto :ECHO_DONE )
 :: each version of MSVS changes the variables that are setup, so just echo ALL variables
 :: [2012-03-15] MSVS 10: vars == DevEnvDir; Framework35Version; FrameworkDir; FrameworkDIR32; FrameworkVersion; FrameworkVersion32; FSHARPINSTALLDIR; INCLUDE; LIB; LIBPATH; MAKE; MSVCDir; PATH; VCINSTALLDIR; VCVARS_ARE_SET; VSINSTALLDIR; WindowsSdkDir;
-( setlocal
+( setLocal
 set "__VCvars_ME="
 set "__VCvars_echo="
 set "__VCvars_exit="
-set "__VCVARS_version="
 set "__VCVARS_message="
 set
-endlocal
+endLocal
 )
 :ECHO_DONE
 
@@ -822,7 +918,7 @@ for /f "tokens=6-10 delims=. " %%g in ('cl 2^>^&1 ^| findstr /I /C:"Version"') d
         set VCvars_CL_VER=%%i%%j
     ) else set VCvars_CL_VER=19.11+
     )
-if NOT DEFINED __VCvars_quiet ( echo %__VCvars_ME%: %__VCVARS_message% ^(%__VCvars_version%; cl-%VCvars_CL_version%/%VCvars_CL_target_cpu%^) )
+if NOT DEFINED __VCvars_quiet ( echo %__VCvars_ME%: %__VCVARS_message% ^(%VCvars_version%; cl-%VCvars_CL_version%/%VCvars_CL_target_cpu%^) )
 if NOT DEFINED __VCvars_exit (set __VCvars_exit=0)
 set "__VCvars_ME="
 set "__VCvars_echo="
@@ -841,7 +937,7 @@ goto :EOF
 :$VARS_file_path ( ref_RETURN PATH )
 :: return path to any VCvarsall.BAT (preferred) or VCvars32.BAT associated with PATH
 ::
-setlocal
+setLocal
 set "__DEBUG_KEY=1"
 set "__MEfn=VARS_file_path"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -871,17 +967,18 @@ set "_path="
 rem echo %__ME%: ERROR: cannot find vcvarsall.bat, vcvars32.bat, or bin\vcvars32.bat [in "%VCVARS%"]
 rem exit /b -1
 :$VARS_file_path_DONE
+if DEFINED _path call :$FQ_name_of _path "%_path%"
 :$VARS_file_path_RETURN
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: _RETvar=%_RETvar% ]
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: _path=%_path% ]
-endlocal & set %_RETvar%^=%_path%
+endLocal & set %_RETvar%^=%_path%
 goto :EOF
 ::
 
 ::
 :$shift_args ( ref_RETURN ARGS )
 ::
-setlocal
+setLocal
 set "_RETval="
 set "_RETvar=%~1"
 ::
@@ -896,14 +993,14 @@ if NOT DEFINED arg_list ( goto :$shift_args_DONE )
 call :$$list_to_items _RETval "%arg_list%"
 :$shift_args_DONE
 :$shift_args_RETURN
-endlocal & set %_RETVAR%^=%_RETVAL%
+endLocal & set %_RETVAR%^=%_RETVAL%
 goto :EOF
 ::
 
 ::
 :$transform_slash_question ( ref_VARNAME )
 ::
-setlocal enabledelayedexpansion
+setLocal enableDelayedExpansion
 set _RETval=!%1!
 set "_RETvar=%~1"
 ::
@@ -926,25 +1023,31 @@ if "!t!"==" /?" (
 )
 :$transform_slash_question_DONE
 :$transform_slash_question_RETURN
-endlocal & set %_RETVAR%^=%_RETVAL%
+endLocal & set %_RETVAR%^=%_RETVAL%
 goto :EOF
 ::
 
 @::::
-@:: FUNCTIONS (library:rev76)
+@:: FUNCTIONS (library:rev81)
 @call %*
 @goto :EOF
 ::
 
-:: Copyright (C) 2011-2018 ~ Roy Ivy III
+:: Copyright (C) 2011-2020 ~ Roy Ivy III
 :: License: GPLv3 (see https://opensource.org/licenses/GPL-3.0 @@ http://archive.is/id3YT)
 :: * this software is provided for free, WITHOUT ANY EXPRESS OR IMPLIED WARRANTY (see the license for details)
+
+:: spell-checker:ignore (common-ENV-vars) COMSPEC ERRORLEVEL SYSTEMDRIVE SYSTEMROOT CMDCMDLINE
+:: spell-checker:ignore (common-shell-commands) gccvars TCMD findstr loadbtm readlink realpath makecab readsymlink wmic systeminfo whoami
+:: spell-checker:ignore (names) dbenham dbenham's jeb jeb's rivy
+:: spell-checker:ignore (vars/names) Einitialize Tval Tvar preinitialize preinitialization VARNAME subshell fullpath PATHEXT PATHLIST PATHLISTs tempfile CMDVARIABLES COMSPECNAME PARSETYPE rtrim dpnx NTFS shortname fullname filetime ampm filedate readonly ITEMNAME DIRCMD EXTENSIONLIST EXTS CURRENTDRIVE ltrim dequote dequoted delims WBEM autorun osarchitecture symlink symlinks NONUNC parens MEFN undefines dnpx subshells devmode HKEY echo'd PRIV nocase pathnames
+:: spell-checker:ignore prepend prepended canonicalized
 
 :: NOTE: ToDO: as a notation signal, function labels are annotated with $; library functions will be annotated with $$ or $_ to avoid clashes with other SUBs/functions
 
 :: NOTE: ToDO: add noLF versions to all $$echo... functions
 
-:: NOTE: ToDO: add ability to store/use/rerturn double-quotes and semicolons (? using character replacements)
+:: NOTE: ToDO: add ability to store/use/return double-quotes and semicolons (? using character replacements)
 :: #.... use ref: https://sbjh.wordpress.com/2013/02/08/generate-any-control-character @@ https://archive.is/QYqgh
 
 :: NOTE: fix bug working with ampersand (&) characters; any problems with redirection characters, etc?
@@ -956,7 +1059,7 @@ goto :EOF
 :: NOTES
 :: DEFINITIONS
 :: ITEMs are character strings which may contain no internal double quotes (and no characters outside the usual non-graphical, printable set [ ord(ch) > 31, ord(ch) < 128 ]
-:: LISTs are a ';' seperated list of ITEMs
+:: LISTs are a ';' separated list of ITEMs
 :: SETs or PATHLISTs are LISTs which contain unique individual ITEMs (and don't accept duplicate additions)
 :: PATHLISTs don't accept NULL ITEM additions
 :: PATHLISTs normalize all added ITEMs as PATHs (which removes any trailing backslashes [DOS/Win path dividers])
@@ -967,16 +1070,16 @@ goto :EOF
 :: NULL valued ITEMs within LISTs may be either encoded as either "" or NULL, but will be returned as NULL when using functions returning individual elements within LISTs
 ::
 :: NOTE: Don't use '(set %RETvar%=%RETval%)' for return values as internal close parenthesis in RETval will cause errors. Use 'set "%RETvar%=%RETval%"' instead.
-:: NOTE: ... if RETval may contain double quotes, must use 'endlocal & set %RETvar%=%RETval%', as surrounding aa double quote with double quotes won't work.
+:: NOTE: ... if RETval may contain double quotes, must use 'endLocal & set %RETvar%=%RETval%', as surrounding aa double quote with double quotes won't work.
 
 :: ToDO: add new function "get_output( REF_VARNAME COMMAND )" that runs COMMAND & stores the last line output into VARNAME (initial plan is to use a temporary file)
 
-:: ToDO: ( endlocal ... ) block and variations to bypass setlocal/endlocal walls
-:: ToDO: BLOG needed parens for ifs in end ( endlocal ... ) block o/w only 1st if is evaluated
+:: ToDO: ( endLocal ... ) block and variations to bypass setLocal/endLocal walls
+:: ToDO: BLOG needed parens for ifs in end ( endLocal ... ) block o/w only 1st if is evaluated
 
-:: URLref: Use of $ as subroutine sigil @@ http://www.webcitation.org/5z4F3V9yk @ 2011-05-30.0754
+:: ref: Use of $ as subroutine sigil @@ http://www.webcitation.org/5z4F3V9yk @ 2011-05-30.0754
 
-:: ToDO: rethink returning values (using jeb's techinique @ http://www.dostips.com/forum/viewtopic.php?p=6930#p6930 @@ http://www.webcitation.org/6ADfeDSrJ)
+:: ToDO: rethink returning values (using jeb's technique @ http://www.dostips.com/forum/viewtopic.php?p=6930#p6930 @@ http://www.webcitation.org/6ADfeDSrJ)
 
 :: ToDO: rethink PATH functions in reference to the following notes:
 ::     : [How-TO check if directory is within PATH] "http://stackoverflow.com/questions/141344/how-to-check-if-directory-exists-in-path/8046515#8046515"
@@ -997,18 +1100,18 @@ goto :EOF
 :: ToDO: ?? change API function names to use sigil sign ($)?
 
 :: NOTE: Use DEFINED and NOT DEFINED instead of comparison of vars to "" when possible to avoid quoting issues as much as possible
-:: NOTE: "%_RETvar%" == "" comparision @ function RETURN is necessary because of endlocal which undefines _RETvar after the %% instantiation
+:: NOTE: "%_RETvar%" == "" comparison @ function RETURN is necessary because of endLocal which undefines _RETvar after the %% instantiation
 
 :: DONE::ToDO: update API changes :: _echo_no_LF => _echo_noLF ; _path_of_first => _path_of_file
 :: ToDO: !! change path_of_item_in_pathlist to either NOTE NULL item will be found in first existing path OR return NULL
 :: ToDO: !! copy updated library to all other BATs
 :: ToDO: update library documentation with a list of functions & short, one line explanations as a summary section
 
-:: URLref: [CMD Syntax: Escape characters, delimiters, & quotes] http://ss64.com/nt/syntax-esc.html @@ http://archive.is/V92JZ
-:: URLref: [CMD parsing (at command line & at batch file level)] http://stackoverflow.com/questions/4094699/how-does-the-windows-command-interpreter-cmd-exe-parse-scripts/4095133#4095133
+:: ref: [CMD Syntax: Escape characters, delimiters, & quotes] http://ss64.com/nt/syntax-esc.html @@ http://archive.is/V92JZ
+:: ref: [CMD parsing (at command line & at batch file level)] http://stackoverflow.com/questions/4094699/how-does-the-windows-command-interpreter-cmd-exe-parse-scripts/4095133#4095133
 
-:: URLref: [dbenham HOME - CharLib.BAT] https://sites.google.com/site/dbenhamfiles/home @@ http://archive.is/8KAbT
-:: URLref: [BUG SOLVED! - Return any string across ENDLOCAL boundary; using %%2 ... in FOR] http://www.dostips.com/forum/viewtopic.php?f=3&t=1839 @@ http://archive.is/0QuYk
+:: ref: [dbenham HOME - CharLib.BAT] https://sites.google.com/site/dbenhamfiles/home @@ http://archive.is/8KAbT
+:: ref: [BUG SOLVED! - Return any string across endLocal boundary; using %%2 ... in FOR] http://www.dostips.com/forum/viewtopic.php?f=3&t=1839 @@ http://archive.is/0QuYk
 
 ::
 ::
@@ -1021,15 +1124,31 @@ goto :EOF
 :: ref: @dbenham's comment on the answer <http://stackoverflow.com/questions/23327304/my-goto-redirect-is-not-working-but-works-with-echo/23327977#23327977>[`@`](http://archive.is/6CgpF#39.25%)
 ::
 :: release pinned ERRORLEVEL & shift into command line context & die/exit (setting both ERRORLEVEL + process exit code)
-set "ERRORLEVEL=" & goto _undefined_label_ 2>NUL || "%COMSPEC%" /d /c exit %ERRORLEVEL%
+::
+:: ! bug: blocks parent process reset of window title, leading to ever-expanding window titles; so, reset to name of "%COMSPEC%" as a default
+:: * note: for correct operation, `setLocal` cannot be used; so, as we are within the parent variable space, be careful to avoid environment variable overwrites
+REM set "ERRORLEVEL=" & goto _undefined_label_ 2>NUL || "%COMSPEC%" /d /c exit %ERRORLEVEL%
+call :#exit__title __exit_title "%COMSPEC%"
+set "__exit_title=" && title %__exit_title% && set "ERRORLEVEL=" & goto _undefined_ 2>NUL || "%COMSPEC%" /d/c "exit %ERRORLEVEL%"
 ::echo "NEVER EXECUTE" code has been executed!!! 1>&2
 goto :EOF &:: should NEVER be executed
+::
+:#exit__title ( ref_RETURN PATH )
+:: RETURN == name of PATH
+setLocal
+set "_RETvar=%~1"
+set "_RETval=%~2"
+if NOT DEFINED _RETval ( set "_RETval=cmd" & goto :#exit__title_RETURN )
+set "_RETval=%~n2"
+:#exit__title_RETURN
+endLocal & set %_RETvar%^=%_RETval%
+goto :EOF
 ::
 
 ::
 :__exec_self_as_BTM
 :: NOTE: should NOT be called as a subroutine; ONLY use directly, with a guarded GOTO (eg, "if 1.0 == 01 if /i "%~x0" neq ".BTM" goto :__exec_self_as_BTM")
-:: VARS: GLOBAL::__exec_self_as_BTM_localize; must be set prior to execution; BOOLEAN == is current script localized within SETlocal/ENDlocal block?; required to set up balanced SETlocal/ENDlocal blocks within newly incarnated BTM
+:: VARS: GLOBAL::__exec_self_as_BTM_localize; must be set prior to execution; BOOLEAN == is current script localized within setLocal/endLocal block?; required to set up balanced setLocal/endLocal blocks within newly incarnated BTM
 :: VARS: GLOBAL::__ME, __ME_dir, __ME_fullpath; REQUIRED; these are passed on through to the new BTM script as pointers to the context of the original script
 :: NOTE: Prior failed attempts at TCC speedup:
 :: * @if 1.0 == 1 ( loadbtm on 1> nul 2> nul & cd . ) &:: only works for TCC (not TCC/LE) and DOESN'T work well at all, timing seems just as slow!! (Maybe this is because of the call's to subroutines?)
@@ -1040,7 +1159,7 @@ if NOT defined __ME_dir ( echo %__ME%:__exec_self_as_BTM: ERROR: __ME_dir must b
 if NOT defined __ME_fullpath ( echo %__ME%:__exec_self_as_BTM: ERROR: __ME_fullpath must be defined prior to call; unable to execute script as BTM 1>&2 & @echo %__ME_echo% & @exit /B -1 )
 call :_tempfile __exec_self_as_BTM_TEMPFILE "%__ME_fullpath%" .BTM
 if NOT exist "%__exec_self_as_BTM_TEMPFILE%" ( echo %__ME%:__exec_self_as_BTM: ERROR: unable to open temporary file for BTM creation 1>&2 & @echo %__ME_echo% & @exit /B -1 )
-if DEFINED __exec_self_as_BTM_localize echo @setlocal>> "%__exec_self_as_BTM_TEMPFILE%"
+if DEFINED __exec_self_as_BTM_localize echo @setLocal>> "%__exec_self_as_BTM_TEMPFILE%"
 echo @:: [dynamic BTM, created from "%__ME_fullpath%"]>> "%__exec_self_as_BTM_TEMPFILE%"
 echo @set __exec_self_as_BTM_TEMPFILE=>> "%__exec_self_as_BTM_TEMPFILE%"
 echo set __ME=%__ME%>> "%__exec_self_as_BTM_TEMPFILE%"
@@ -1050,9 +1169,9 @@ echo @goto :__BTM_ENTRY >> "%__exec_self_as_BTM_TEMPFILE%"
 ::type "%~dpnx0" >> "%__exec_self_as_BTM_TEMPFILE%"
 ::type "%~f0" >> "%__exec_self_as_BTM_TEMPFILE%"
 type "%__ME_fullpath%" >> "%__exec_self_as_BTM_TEMPFILE%"
-:: correct setlocal/endlocal imbalance
+:: correct setLocal/endLocal imbalance
 if NOT DEFINED __exec_self_as_BTM_localize goto :__exec_self_as_BTM_call
-endlocal & set __exec_self_as_BTM_TEMPFILE=%__exec_self_as_BTM_TEMPFILE%
+endLocal & set __exec_self_as_BTM_TEMPFILE=%__exec_self_as_BTM_TEMPFILE%
 :__exec_self_as_BTM_call
 :: call new BTM incarnation
 call "%__exec_self_as_BTM_TEMPFILE%" %*
@@ -1070,7 +1189,7 @@ goto :EOF
 :: determine and return the current echo state [ON/OFF]
 :: RETURN == ON _or_ OFF [corresponding to the current echo state and usable as "echo %RETval%"]
 :: NOTE: subs generally expect echo ON/OFF to be set prior to call for debugging so don't use any subroutine calls
-@setlocal
+@setLocal
 @set "__DEBUG_KEY=@"
 @set "__MEfn=_echo_state"
 @set "_RETval=OFF"
@@ -1087,7 +1206,7 @@ goto :EOF
 @type "%tempfile%" | "%SystemRoot%\System32\findstr" /i /r " [(]*on[)]*\.$" >nul 2>&1
 @if "%ERRORLEVEL%"=="0" ( set _RETval=ON )
 ::@erase "%tempfile%" /Q > nul 2>&1
-@endlocal & @set %_RETvar%^=%_RETval%
+@endLocal & @set %_RETvar%^=%_RETval%
 @if NOT 01 == 1.0 (@exit /b 0) else (@quit 0)
 ::
 
@@ -1099,7 +1218,7 @@ goto :EOF
 :: RETURN == full pathname of temporary file (with given PREFIX and EXTENSION) [NOTE: has NO surrounding quotes]
 :: PREFIX == optional filename prefix for temporary file
 :: EXTENSION == optional extension (including leading '.') for temporary file [default == '.bat']
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_tempfile"
 set "_RETval="
@@ -1129,8 +1248,8 @@ if NOT EXIST "%_RETval%" (
     )
 :_tempfile_find_unique_temp_DONE
 :_tempfile_RETURN
-::endlocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
-endlocal & set %_RETvar%^=%_RETval%
+::endLocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -1140,9 +1259,9 @@ goto :EOF
 ::
 :: BAT/CMD preinitialization for alternative shell compatibility [TCC/4NT, etc]
 :: get COMSPEC filename and determine shell parsing type
-:: NOTE: COMSPEC and parsing shell could be different if, for example, this BAT is executed from perl (perl defaults to using 'cmd' for system commands despite %COMSPEC% [see PERL5SHELL references in URLrefs: http://perldoc.perl.org/perlwin32.html#Usage-Hints-for-Perl-on-Win32 , http://perldoc.perl.org/perlrun.html#ENVIRONMENT])
+:: NOTE: COMSPEC and parsing shell could be different if, for example, this BAT is executed from perl (perl defaults to using 'cmd' for system commands despite %COMSPEC% [see PERL5SHELL references in refs: http://perldoc.perl.org/perlwin32.html#Usage-Hints-for-Perl-on-Win32 , http://perldoc.perl.org/perlrun.html#ENVIRONMENT])
 :: NOTE: MINIMIZE subroutine calls within __PREinitialize (and any called subroutines) to allow quick transition to BTM for TCC (especially, comment out "call :_echo_DEBUG_KEY ..." calls unless/until needed)
-setlocal
+setLocal
 set "__DEBUG_KEY=@@"
 set "__MEfn=__PREinitialize"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1193,7 +1312,7 @@ set "_RETval=%_COMSPECNAME%"
 REM call :_echo_DEBUG_KEY _COMSPECNAME="%_COMSPECNAME%"
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -1201,7 +1320,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -1214,7 +1333,7 @@ goto :EOF
 :: NOTE: _filename_of("") == ""
 :: NOTE: _filename_of("\\") == _filename_of("\") == _filename_of("c:\") == _filename_of("c:\.") == ""
 :: NOTE: _filename_of("c:") == _filename_of("c:.") == _filename_of(".")
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_filename_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1233,7 +1352,7 @@ call :_param_tilde_N _RETval "%_path%"
 :: remove trailing backslashes
 call :_rtrim _RETval "%_RETval%" "\"
 :_filename_of_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -1241,7 +1360,7 @@ call :_rtrim _RETval "%_RETval%" "\"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -1252,12 +1371,12 @@ goto :EOF
 :: RETURN_path == PATH, rewritten in a fully qualified (semi-canonical) form: removing extraneous trailing "\" or "\." and changing path to point to current drive (if a drive is specified)
 :: RETURN_drive == original drive of PATH, "" if no drive was specified
 :: NOTE:: changing PATH to refer to a similar "false" PATH on the local drive (for CMD and/or TCC) speeds up calculations for UNC network paths (avoiding network timeouts)
-:: NOTE:: special processing is needed to deal with the fact that TCC acts out with almost unsuppressible errors for inaccessible and UNC PATHs [which is "WAD" per developer [meh, see URLref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
-:: NOTE:: changing PATH to refer to a local drive for TCC [avoids a loud & nasty TCC bug [URLref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://webcitation.org/63ua1bpOk]]
+:: NOTE:: special processing is needed to deal with the fact that TCC acts out with almost unsuppressible errors for inaccessible and UNC PATHs [which is "WAD" per developer [meh, see ref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
+:: NOTE:: changing PATH to refer to a local drive for TCC [avoids a loud & nasty TCC bug [ref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://webcitation.org/63ua1bpOk]]
 :: NOTE: assumes PATH has leading "X:", "\\...\...", "\...", or is a relative path (without leading "\")
 :: NOTE: _rewrite_path_to_FQ_local("") => ("", "")
 :: NOTE: _rewrite_path_to_FQ_local("\\") == _rewrite_path_to_FQ_local("\")
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_rewrite_path_to_FQ_local"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1306,7 +1425,7 @@ set "_RETval=%local_drive%%_path%"
 :_rewrite_path_to_FQ_local_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -1314,7 +1433,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set "%_RETvar%=%_RETval%" & set "%_RETvar_drive%=%drive%"
+endLocal & set "%_RETvar%=%_RETval%" & set "%_RETvar_drive%=%drive%"
 goto :EOF
 ::
 
@@ -1326,8 +1445,8 @@ goto :EOF
 :: NOTE: assumes PATH has leading "X:", "\\SERVER"; PATHs without a drive indicator return NULL
 :: NOTE: drive_of("") == ""; drive_of("\\SERVER\PATH") == "\\SERVER"
 :: NOTE: special UNC paths: drive_of("\\?\UNC\PATH") => drive_of("\\PATH"); drive_of("\\?\PATH") == drive_of("\\.\PATH") => drive_of("PATH")
-:: URLref: [Naming Files, Paths, and Namespaces - MSDN] http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx @@ http://archive.is/EcTrM @@ http://webcitation.org/6IwYVd1Cn
-setlocal
+:: ref: [Naming Files, Paths, and Namespaces - MSDN] http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx @@ http://archive.is/EcTrM @@ http://webcitation.org/6IwYVd1Cn
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_drive_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1335,11 +1454,11 @@ set "_RETval="
 set "_RETvar=%~1"
 set "_path=%~2"
 call :_split_drive_path_of _RETval _ "%_path%"
-::if NOT DEFINED _RETval ( set "_RETval=%~d2" ) &:: causes TCC errors for non-existant PATHs
+::if NOT DEFINED _RETval ( set "_RETval=%~d2" ) &:: causes TCC errors for non-existent PATHs
 :_drive_of_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -1347,7 +1466,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -1360,7 +1479,7 @@ goto :EOF
 :: NOTE: _FQ_drive_of("\\") == _FQ_drive_of("\") == _FQ_drive_of("\.")
 :: NOTE: _FQ_drive_of("c:") == _FQ_drive_of("c:.")
 :: NOTE: _FQ_drive_of("c:\") == _FQ_drive_of("c:\.") == "c:\"
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_FQ_drive_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1379,7 +1498,7 @@ REM call :_echo_DEBUG_KEY drive="%drive%"
 :_FQ_drive_of_DONE
 set "_RETval=%drive%"
 :_FQ_drive_of_RETURN
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -1392,8 +1511,8 @@ goto :EOF
 :: NOTE: assumes PATH has leading "X:", "\\", "\...", or is a relative path (without leading "\")
 :: NOTE: drive_of("") == ""; drive_of("\\SERVER\PATH") == "\\SERVER"
 :: NOTE: special UNC paths: drive_of("\\?\UNC\PATH") => drive_of("\\PATH"); drive_of("\\?\PATH") => drive_of("PATH"); drive_of("\\.\DEVICE\PATH") => "\\.\DEVICE"
-:: URLref: [Naming Files, Paths, and Namespaces - MSDN] http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx @@ http://archive.is/EcTrM @@ http://webcitation.org/6IwYVd1Cn
-setlocal
+:: ref: [Naming Files, Paths, and Namespaces - MSDN] http://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx @@ http://archive.is/EcTrM @@ http://webcitation.org/6IwYVd1Cn
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_split_drive_path_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1440,7 +1559,7 @@ REM call :_echo_DEBUG_KEY _RETvar_drive="%_RETvar_drive%"
 REM call :_echo_DEBUG_KEY _RETval_drive="%_RETval_drive%"
 REM call :_echo_DEBUG_KEY _RETvar_path="%_RETvar_path%"
 REM call :_echo_DEBUG_KEY _RETval_path="%_path%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -1449,7 +1568,7 @@ REM call :_echo_DEBUG_KEY _RETval_path="%_path%"
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
 :: return values via a single line with surrounding double-quotes; this is fine here, given double-quotes are illegal in NTFS filenames
-endlocal & set "%_RETvar_drive%=%_RETval_drive%" & set "%_RETvar_path%=%_path%"
+endLocal & set "%_RETvar_drive%=%_RETval_drive%" & set "%_RETvar_path%=%_path%"
 goto :EOF
 ::
 
@@ -1460,8 +1579,8 @@ goto :EOF
 :: trim characters in CHARSET from right-side of ITEM
 :: RETURN = ITEM with rightmost CHARSET characters removed
 :: NOTE: CHARSET defaults to "<SPACE>" if NULL/missing
-:: URLrefs: [Variable editing] http://ss64.com/nt/syntax-substring.html, [How to trim whitespace from a string] http://www.experts-exchange.com/OS/Microsoft_Operating_Systems/MS_DOS/Q_23816304.html
-setlocal
+:: refs: [Variable editing] http://ss64.com/nt/syntax-substring.html, [How to trim whitespace from a string] http://www.experts-exchange.com/OS/Microsoft_Operating_Systems/MS_DOS/Q_23816304.html
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_rtrim"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1480,8 +1599,8 @@ REM call :_echo_DEBUG_KEY item="%item%"
 REM call :_echo_DEBUG_KEY charset="%charset%"
 :: change any internal double quotes to chr(255) (avoids syntax errors during the character comparison and removal process) [ NOTE: may have internal double quotes, so no outer quotes for set; this also creates a problem with internal ()'s if the set is enclosed in a block, so use a goto around it as needed]
 if NOT DEFINED item ( goto :_rtrim_LOOP_ch )
-set "item=%item:"=¸%"
-set "charset=%charset:"=¸%"
+set "item=%item:"=Â¸%"
+set "charset=%charset:"=Â¸%"
 set "chars=%charset%"
 :_rtrim_LOOP_ch
 REM call :_echo_DEBUG_KEY LOOP.item="%item%"
@@ -1507,13 +1626,13 @@ goto :_rtrim_LOOP_ch
 :_rtrim_RETURN
 if NOT DEFINED item ( goto :_rtrim_RETURN_translate_DONE )
 :: return any double quotes to ITEM
-set item=%item:¸=^"%
+set item=%item:Â¸=^"%
 :: " [balance double quote for editor parsing]
 :_rtrim_RETURN_translate_DONE
 set _RETval=%item%
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -1521,7 +1640,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -1529,9 +1648,9 @@ goto :EOF
 :$$param_tilde_N ( ref_RETURN PATH )
 :$param_tilde_N ( ref_RETURN PATH )
 :_param_tilde_N ( ref_RETURN PATH )
-:: NOTE: for TCC, assume that PATH is on (or has been forced onto) an accessible drive and not a UNC pathname [necessary to avoid unsupressable TCC parsing errors; which is "WAD" per developer [meh, see URLref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
+:: NOTE: for TCC, assume that PATH is on (or has been forced onto) an accessible drive and not a UNC pathname [necessary to avoid insuppressible TCC parsing errors; which is "WAD" per developer [meh, see ref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
 :: RETURN == name of PATH
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_param_tilde_N"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1543,7 +1662,7 @@ if NOT DEFINED _RETval ( goto :_param_tilde_N_RETURN )
 set "_RETval=%~n2"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 :_param_tilde_N_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -1551,7 +1670,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -1596,7 +1715,7 @@ goto :EOF
 :_echo_item_DEBUG_KEY ( DEBUG DEBUG_KEY ME MEfn ITEM )
 :: used to help avoid the CMD/TCC BUG which causes a script breaking error if ()'s (more specifically, closed parens) are found within an IF() block
 :: NOTE: using a single echo'd item allows passage of other vars into the function
-setlocal
+setLocal
 set __DEBUG=%~1
 set __DEBUG_KEY=%~2
 set __ME=%~3
@@ -1604,7 +1723,7 @@ set __MEfn=%~4
 set item=%~5
 @call :_echo_DEBUG_KEY %item%
 :_echo_item_DEBUG_KEY_RETURN
-endlocal
+endLocal
 goto :EOF
 ::
 
@@ -1616,7 +1735,7 @@ goto :EOF
 :_is_same_command ( ref_RETURN FILENAME1 FILENAME2 )
 :: determine if FILENAME1 is the same as FILENAME2
 :: RETURN == (BOOLEAN as undef/1) whether FILENAMEs are the same
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_same_command"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1635,7 +1754,7 @@ if /i "%_p2%"=="%_p3%" ( set "_RETval=1" )
 :_is_same_command_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%~1"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-endlocal & set "%~1=%_RETval%"
+endLocal & set "%~1=%_RETval%"
 goto :EOF
 ::
 
@@ -1646,7 +1765,7 @@ goto :EOF
 :: determine if FILENAME1 is similar to FILENAME2
 :: RETURN == (BOOLEAN as undef/1) whether FILENAMEs are similar
 :: NOTE: not _is_SAME_command; that entails parsing PATHEXT and concatenating each EXT for any argument with a NULL extension
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_similar_command"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1667,7 +1786,7 @@ if NOT "%_EXT_2%"=="%_EXT_3%" if "%_EXT_3%"=="" (
 ::if /i "%~dnpx2"=="%~dnpx3" ( set "_RETval=1" )  &:: FAILS for shells executed with non-fully qualified paths (eg, subshells called with 'cmd.exe' or 'tcc')
 if /i "%~$PATH:2"=="%~$PATH:3" ( set "_RETval=1" )
 :_is_similar_command_RETURN
-endlocal & set "%~1=%_RETval%"
+endLocal & set "%~1=%_RETval%"
 goto :EOF
 ::
 
@@ -1680,7 +1799,7 @@ goto :EOF
 :: NOTE: if %cmdcmdline% has multiple parts, the script is NOT under direct console execution [!! except for elevate or run `cmd /k ...`]
 :: NOTE: ToDO: check for ...\CMD.exe or ...\CMD.exe /k [elevate or run] vs ...\CMD.exe /c [explorer or run]
 :: NOTE:   ... elevate.x32.exe uses C:\Windows\SysWOW64\CMD.exe on 64-bit systems; deal with C:\Windows\System32\CMD.exe and C:\Windows\SysWOW64\CMD.exe
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_exec_from_console"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1688,8 +1807,8 @@ set "_RETval=0"
 set _RETvar=%~1
 call :_is_same_command _RETval "%COMSPEC%" %cmdcmdline%
 :_is_exec_from_console_RETURN
-::endlocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
-endlocal & set %_RETvar%^=%_RETval%
+::endLocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -1702,7 +1821,7 @@ goto :EOF
 :: NOTE: known possibilities: `...\CMD.exe`, `...\CMD.exe /k` [via elevate or run], `...\CMD.exe /c` [via explorer or run]
 :: NOTE: 32-bit commands (eg, elevate.x32.exe) may see `C:\Windows\SysWOW64\CMD.exe` on 64-bit systems; deal with `C:\Windows\System32\CMD.exe` and `C:\Windows\SysWOW64\CMD.exe`
 :: [CMD/TCC] /C == transient shell carries out the command specified by string and then terminates
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=$is_transient_console"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1711,8 +1830,8 @@ set _RETvar=%~1
 call :_create_list ccl_token_list %cmdcmdline%
 call :_is_in_list _RETval "/c" "%ccl_token_list%"
 :_is_transient_shell_RETURN
-::endlocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
-endlocal & set %_RETvar%^=%_RETval%
+::endLocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -1723,7 +1842,7 @@ goto :EOF
 :: determine if script is operating under privilege elevation
 :: RETURN == (BOOLEAN as undef/1) whether script has elevated permissions
 :: NOTE: pre-VISTA OS do not have UAC limited permissions and are therefore always considered "elevated"
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_elevated"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1739,7 +1858,7 @@ call :_is_UAC_elevated _RETval
 :_is_elevated_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -1747,7 +1866,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -1762,7 +1881,7 @@ goto :EOF
 :: RETURN == (BOOLEAN as undef/1) whether script has UAC elevated permissions
 :: if VISTA+, run %SystemRoot%/System32/whoami.exe /groups and check for "Mandatory Label\High Mandatory Level" - if missing -> NOT elevated
 :: using "net session" instead as a more robust method of detection
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_UAC_elevated"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1778,7 +1897,7 @@ IF %ERRORLEVEL% EQU 0 ( SET "_RETval=true" )
 :_is_UAC_elevated_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -1786,7 +1905,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -1795,17 +1914,21 @@ goto :EOF
 :$is_devmode ( ref_RETURN )
 :_is_devmode ( ref_RETURN )
 :: Win10+ Developer Mode
+:: ref: <https://www.hanselman.com/blog/Windows10DeveloperMode.aspx>[`@`](https://archive.is/LdFLJ)
+:: ref: <https://en.wikipedia.org/wiki/Windows_10_version_history>[`@`](https://archive.is/LkhxO)
 :: ref: <https://stackoverflow.com/questions/41231586/how-to-detect-if-developer-mode-is-active-on-windows-10>[`@`](https://archive.is/63txT)
+:: ref: <https://stackify.com/windows-10-developer-mode>[`@`](https://archive.is/dObTP)
 :: RETURN == (BOOLEAN as undef/1) whether Win10 Developer Mode is enabled
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_devmode"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
 set "_RETval="
 set _RETvar=%~1
 :: ? is check for Win10 needed?
-call :_win_os_version _version_name _version_N
-IF /i %_version_N% LSS 10 ( goto :_is_devmode_RETURN )
+call :_win_os_version _version_name _version_N _version_V _version_V_Major _version_V_minor _version_V_build
+if %_version_N% LSS 10 ( goto :_is_devmode_RETURN )
+if %_version_V_minor% EQU 0 if %_version_V_build% LSS 14393 ( goto :_is_devmode_RETURN )
 ::
 set "ERRORLEVEL="
 for /F "tokens=1,2,3" %%g in ('reg query "HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" /v AllowDevelopmentWithoutDevLicense') do (
@@ -1815,7 +1938,7 @@ IF %ERRORLEVEL% EQU 0 IF DEFINED devmode IF /i NOT "%devmode%"=="0x0" ( SET "_RE
 :_is_devmode_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -1824,10 +1947,10 @@ goto :EOF
 :$has_privilege ( ref_RETURN PRIV_NAME )
 :_has_privilege ( ref_RETURN PRIV_NAME )
 :: privilege check
-:: URLref: http://stackoverflow.com/questions/11607389/how-to-view-user-privileges-using-windows-cmd
-:: URLref: https://social.technet.microsoft.com/Forums/windowsserver/en-US/e24a35b3-fb72-4918-8e51-562e2ad8d8f5/what-is-the-state-column-returned-by-whoami-priv?forum=winserversecurity @@ https://archive.today/uZMlX
+:: ref: http://stackoverflow.com/questions/11607389/how-to-view-user-privileges-using-windows-cmd
+:: ref: https://social.technet.microsoft.com/Forums/windowsserver/en-US/e24a35b3-fb72-4918-8e51-562e2ad8d8f5/what-is-the-state-column-returned-by-whoami-priv?forum=winserversecurity @@ https://archive.today/uZMlX
 :: RETURN == (BOOLEAN as undef/1) whether script has privilege by the name PRIV_NAME
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_has_privilege"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1842,15 +1965,31 @@ IF %ERRORLEVEL% EQU 0 ( SET "_RETval=true" )
 :_has_privilege_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
-::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
-::      set "%_RETvar%=%_RETval%"
-::      ) else (
-::      set %_RETvar=%_RETval
-::      ))
-::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
-::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
+goto :EOF
+::
+
+::
+:$$can_symlink ( ref_RETURN )
+:$can_symlink ( ref_RETURN )
+:_can_symlink ( ref_RETURN )
+:: can create symlinks
+:: NOTE: UAC removes symlink creation priv (SeCreateSymbolicLinkPrivilege; seen with `whoami /priv` or `whoami /all`)
+:: ref: <https://blogs.windows.com/buildingapps/2016/12/02/symlinks-windows-10>[`@`](http://archive.is/fUa9q)
+:: ref: <https://stackoverflow.com/questions/15320550/why-is-secreatesymboliclinkprivilege-ignored-on-windows-8>[`@`](https://archive.is/3M0Ib)
+:: RETURN == (BOOLEAN as undef/1) whether script has ability to create symlinks
+setLocal
+set "__DEBUG_KEY=@"
+set "__MEfn=_can_symlink"
+REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
+set "_RETval="
+set _RETvar=%~1
+if NOT defined _RETval call :_has_privilege _RETval SeCreateSymbolicLinkPrivilege
+if NOT defined _RETval call :_is_devmode _RETval
+:_can_symlink_RETURN
+REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
+REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -1864,7 +2003,7 @@ goto :EOF
 :: %PAUSE_FLAG% == 0 :: override, no PAUSE needed
 :: %PAUSE_FLAG% == "1, will pause at top level", no PAUSE needed in current or called scripts
 :: %PAUSE_FLAG% == 1 or <OTHER> :: override, PAUSE needed, but set return value to signal value ("1, will pause at top level")
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_exit_pause_needed"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1881,7 +2020,7 @@ REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY "%_RETvar%"="%_INPUT_PAUSE%"
 REM call :_echo_DEBUG_KEY _TRANSIENT="%_TRANSIENT%"
 REM call :_echo_DEBUG_KEY _is_exit_pause_needed="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -1889,35 +2028,35 @@ REM call :_echo_DEBUG_KEY _is_exit_pause_needed="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
 ::
-:$$win_os_version ( ref_RETURN_NAME ref_RETURN_N [ [ [ [ [ref_RETURN_V] ref_RETURN_V_Major ] ref_RETURN_V_minor ] ref_RETURN_V_build ] ref_RETURN_arch ] )
-:$win_os_version ( ref_RETURN_NAME ref_RETURN_N [ [ [ [ [ref_RETURN_V] ref_RETURN_V_Major ] ref_RETURN_V_minor ] ref_RETURN_V_build ] ref_RETURN_arch ] )
-:_win_os_version ( ref_RETURN_NAME ref_RETURN_N [ [ [ [ [ref_RETURN_V] ref_RETURN_V_Major ] ref_RETURN_V_minor ] ref_RETURN_V_build ] ref_RETURN_arch ] )
-:: ToDO: add notes about continuing maintainence needs for increasing Windows versions
+:$$win_os_version ( ref_RETURN_NAME [ ref_RETURN_N [ [ [ [ [ref_RETURN_V] ref_RETURN_V_Major ] ref_RETURN_V_minor ] ref_RETURN_V_build ] ref_RETURN_arch ] ] )
+:$win_os_version ( ref_RETURN_NAME [ ref_RETURN_N [ [ [ [ [ref_RETURN_V] ref_RETURN_V_Major ] ref_RETURN_V_minor ] ref_RETURN_V_build ] ref_RETURN_arch ] ] )
+:_win_os_version ( ref_RETURN_NAME [ ref_RETURN_N [ [ [ [ [ref_RETURN_V] ref_RETURN_V_Major ] ref_RETURN_V_minor ] ref_RETURN_V_build ] ref_RETURN_arch ] ] )
+:: ToDO: add notes about continuing maintenance needs for increasing Windows versions
 :: ToDO: make more robust: 1) check for existence of used EXEs; 2) check for earlier versions
 :: ToDO: ? change "XP.x64" to "XP" with N_bit == "64"
-:: ToDO: add _ARCH, _V, _V_b, _V_Mm as optional return values
+:: DONE: ToDO: add _ARCH, _V, _V_b, _V_Mm as optional return values
 :: find Windows OS version (for Windows versions from Windows 2000 on)
 :: RETURN_NAME == current OS name ["7", "2008.R2", "2008", "Vista", "2003", "XP.x64", "XP", NULL]
 :: RETURN_N == current OS version [ 0 == unknown ]
-:: URLref: http://serverfault.com/questions/124848/using-systeminfo-to-get-the-os-name
-:: URLref: http://stackoverflow.com/questions/1792740/how-to-tell-what-version-of-windows-and-or-cmd-exe-a-batch-file-is-running-on
-:: URLref: http://pario.no/2011/06/19/list-installed-windows-updates-using-wmic @@ http://www.webcitation.org/66a7J58OK
-:: URLref: http://tech-wreckblog.blogspot.com/2009/11/wmic-command-line-kung-fu.html @@ http://www.webcitation.org/66a7MbiGf
-:: URLref: http://roddotnet.blogspot.com/2008/08/how-to-detect-windows-vista-in-batch.html
-:: URLref: [MS Windows Version Numbers] http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx @@ http://www.webcitation.org/66FzghSQU
-:: URLref: http://malektips.com/xp_dos_0025.html @@ http://www.webcitation.org/66G00alzC
-:: URLref: http://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions @@ https://archive.today/JtQ5J
+:: ref: http://serverfault.com/questions/124848/using-systeminfo-to-get-the-os-name
+:: ref: http://stackoverflow.com/questions/1792740/how-to-tell-what-version-of-windows-and-or-cmd-exe-a-batch-file-is-running-on
+:: ref: http://pario.no/2011/06/19/list-installed-windows-updates-using-wmic @@ http://www.webcitation.org/66a7J58OK
+:: ref: http://tech-wreckblog.blogspot.com/2009/11/wmic-command-line-kung-fu.html @@ http://www.webcitation.org/66a7MbiGf
+:: ref: http://roddotnet.blogspot.com/2008/08/how-to-detect-windows-vista-in-batch.html
+:: ref: [MS Windows Version Numbers] http://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx @@ http://www.webcitation.org/66FzghSQU
+:: ref: http://malektips.com/xp_dos_0025.html @@ http://www.webcitation.org/66G00alzC
+:: ref: http://en.wikipedia.org/wiki/List_of_Microsoft_Windows_versions @@ https://archive.today/JtQ5J
 :: NOTE: "systeminfo 2> nul" is used to avoid spurious progress output from systeminfo
 :: ToDO: investigate use of "%SystemRoot%\System32\cmd.exe" /x/d/c "VER instead
 :: ToDO: investigate improved efficiency if VER and systeminfo could be executed just once with value saved into a variable with "ECHO %VAR% | findstr ..."
 :: ToDO: DONE: change to use wmic
 :: NOTE: not using FOR ... in order to use this same function in Autorun :: might be able to use for ('cmd /d ...')
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_win_os_version"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -1936,13 +2075,11 @@ shift
 set _RETvar_V_build=%~1
 shift
 set _RETvar_ARCH=%~1
-:: get temp file
-call :_tempfile _win_os_version_TEMPFILE "%__MEfn%" .txt
 ::*::
-:: URLref: http://serverfault.com/questions/124848/using-systeminfo-to-get-the-os-name
-:: URLref: http://stackoverflow.com/questions/1792740/how-to-tell-what-version-of-windows-and-or-cmd-exe-a-batch-file-is-running-on
-:: URLref: http://pario.no/2011/06/19/list-installed-windows-updates-using-wmic @@ http://www.webcitation.org/66a7J58OK
-:: URLref: http://tech-wreckblog.blogspot.com/2009/11/wmic-command-line-kung-fu.html @@ http://www.webcitation.org/66a7MbiGf
+:: ref: http://serverfault.com/questions/124848/using-systeminfo-to-get-the-os-name
+:: ref: http://stackoverflow.com/questions/1792740/how-to-tell-what-version-of-windows-and-or-cmd-exe-a-batch-file-is-running-on
+:: ref: http://pario.no/2011/06/19/list-installed-windows-updates-using-wmic @@ http://www.webcitation.org/66a7J58OK
+:: ref: http://tech-wreckblog.blogspot.com/2009/11/wmic-command-line-kung-fu.html @@ http://www.webcitation.org/66a7MbiGf
 ::
 :: default values for unknown windows version: version=NULL
 SET _win_os_version=
@@ -1950,20 +2087,19 @@ SET _win_os_version_ARCH=32
 SET _win_os_version_N=0
 SET _win_os_version_FIND=%SystemRoot%\\System32\\FINDSTR
 SET _win_os_version_INFO=%SystemRoot%\\System32\\WBEM\\wmic
+SET "ERRORLEVEL="
 "%SystemRoot%\System32\cmd.exe" /x/d/c "echo. | call "%_win_os_version_INFO%" os get osarchitecture /format:value 2> NUL | call "%_win_os_version_FIND%" /IR /C:"OSArchitecture=64.*" > NUL"
 IF "%ERRORLEVEL%" == "0" (
     SET "_win_os_version_ARCH=64"
     )
-"%SystemRoot%\System32\cmd.exe" /x/d/c "VER | call "%_win_os_version_FIND%" /IR /C:"Version *" > "%_win_os_version_TEMPFILE%""
-set /p _win_os_version_CMDver= < "%_win_os_version_TEMPFILE%" > NUL
-for /f "usebackq tokens=2 delims=[]" %%G in ('%_win_os_version_CMDver%') do set _win_os_version_V=%%G
-set _win_os_version_V=%_win_os_version_V:Version =%
-for /f "usebackq tokens=1,2,3* delims=." %%G in ('%_win_os_version_V%') do (
+for /f "tokens=4 delims=[] " %%G in ('call VER') do set "_win_os_version_V=%%G"
+for /f "tokens=1,2,3* delims=." %%G in ("%_win_os_version_V%") do (
         set _win_os_version_N=%%G
         set _win_os_version_V_Mm=%%G.%%H
         set _win_os_version_V_Major=%%G
         set _win_os_version_V_minor=%%H
         set _win_os_version_V_build=%%I
+        set _win_os_version_V_ubr=%%J
         )
 :_win_os_version_check_5_0
 if NOT "%_win_os_version_V_Mm%" == "5.0" ( goto :_win_os_version_check_5_0_DONE )
@@ -2051,16 +2187,16 @@ goto :_win_os_version_FOUND
 if EXIST "%_win_os_version_TEMPFILE%" ( erase "%_win_os_version_TEMPFILE%" > NUL )
 REM call :_echo_DEBUG_KEY _win_os_version="%_win_os_version%"
 REM call :_echo_DEBUG_KEY _win_os_version_N="%_win_os_version_N%"
-::( endlocal
+::( endLocal
 ::  ( if NOT 1.0 == 1 (set "%_RETvar%=%_win_os_version%" & set "%_RETvar_N%=%_win_os_version_N%"
 ::          ) else (set "%_RETvar=%_win_os_version" & set "%_RETvar_N=%_win_os_version_N"
 ::              )
 ::      )
 ::@rem :::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-( endlocal
+( endLocal
 set %_RETvar%^=%_win_os_version%
-set %_RETvar_N%^=%_win_os_version_N%
+if NOT "%_RETvar_N%"=="" (set %_RETvar_N%^=%_win_os_version_N%)
 if NOT "%_RETvar_V%"=="" (set %_RETvar_V%^=%_win_os_version_V%)
 if NOT "%_RETvar_V_Major%"=="" (set %_RETvar_V_Major%^=%_win_os_version_V_Major%)
 if NOT "%_RETvar_V_minor%"=="" (set %_RETvar_V_minor%^=%_win_os_version_V_minor%)
@@ -2074,7 +2210,7 @@ goto :EOF
 :$$echo_noLF ( [ TEXT ] )
 :$echo_noLF ( [ TEXT ] )
 :_echo_noLF ( [ TEXT ] )
-setlocal
+setLocal
 if 01 == 1.0 ( goto :_echo_noLF_TCC )
 :_echo_noLF_CMD
 echo|set /p OUTPUT=%*
@@ -2083,7 +2219,7 @@ goto :_echo_noLF_RETURN
 echos %*
 goto :_echo_noLF_RETURN
 :_echo_noLF_RETURN
-endlocal
+endLocal
 goto :EOF
 ::
 
@@ -2103,13 +2239,13 @@ goto :EOF
 :_simple_dequote ( ref_RETURN ITEM )
 :: strip outer double quotes from ITEM (NO attempt to check for or remove balanced quotes)
 :: RETURN = dequoted ITEM
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_simple_dequote"
 set "_RETvar=%~1"
 set "_RETval=%~2"
-::endlocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
-endlocal & set %_RETvar%^=%_RETval%
+::endLocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2119,7 +2255,7 @@ goto :EOF
 :_length_of ( ref_RETURN ITEM )
 :: determine length of ITEM
 :: RETURN = length of ITEM
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_length_of"
 set "_RETvar=%~1"
@@ -2133,8 +2269,8 @@ if DEFINED item (
 )
 :_length_of_RETURN
 set "_RETval=%length%"
-::endlocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
-endlocal & set %_RETvar%^=%_RETval%
+::endLocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2145,7 +2281,7 @@ goto :EOF
 :: trim characters from ITEM
 :: RETURN == ITEM with CHARSET characters removed (from both sides)
 :: NOTE: CHARSET defaults to "<SPACE>" if NULL/missing
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_trim"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2159,14 +2295,14 @@ if 1.0 == 01 (
     set charset=%@unquotes[%3]
     )
 if NOT DEFINED charset ( set "charset= " )
-REM call :_echo_DEBUG_KEY _RETVal/item="%_RETval%"
+REM call :_echo_DEBUG_KEY _RETval/item="%_RETval%"
 REM call :_echo_DEBUG_KEY charset="%charset%"
 call :_ltrim _RETval "%_RETval%" "%charset%"
 call :_rtrim _RETval "%_RETval%" "%charset%"
 :_trim_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2174,7 +2310,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2185,8 +2321,8 @@ goto :EOF
 :: trim characters in CHARSET from left-side of ITEM
 :: RETURN = ITEM with leftmost CHARSET characters removed
 :: NOTE: CHARSET defaults to "<SPACE>" if NULL/missing
-:: URLrefs: [Variable editing] http://ss64.com/nt/syntax-substring.html, [How to trim whitespace from a string] http://www.experts-exchange.com/OS/Microsoft_Operating_Systems/MS_DOS/Q_23816304.html
-setlocal
+:: refs: [Variable editing] http://ss64.com/nt/syntax-substring.html, [How to trim whitespace from a string] http://www.experts-exchange.com/OS/Microsoft_Operating_Systems/MS_DOS/Q_23816304.html
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_ltrim"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2206,8 +2342,8 @@ REM call :_echo_DEBUG_KEY item="%item%"
 REM call :_echo_DEBUG_KEY charset="%charset%"
 :: change any internal double quotes to chr(255) (avoids syntax errors during the character comparison and removal process) [ NOTE: may have internal double quotes, so no outer quotes for set; this also creates a problem with internal ()'s if the set is enclosed in a block, so use a goto around it as needed]
 if NOT DEFINED item ( goto :_ltrim_LOOP_ch )
-set "item=%item:"=¸%"
-set "charset=%charset:"=¸%"
+set "item=%item:"=Â¸%"
+set "charset=%charset:"=Â¸%"
 set "chars=%charset%"
 REM call :_echo_DEBUG_KEY LOOP.item="%item%"
 REM call :_echo_DEBUG_KEY charset="%charset%"
@@ -2234,12 +2370,12 @@ goto :_ltrim_LOOP_ch
 :_ltrim_RETURN
 if NOT DEFINED item ( goto :_ltrim_RETURN_translate_DONE )
 :: return any double quotes to ITEM
-set item=%item:¸=^"%
+set item=%item:Â¸=^"%
 :_ltrim_RETURN_translate_DONE
 set _RETval=%item%
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2247,7 +2383,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2258,7 +2394,7 @@ goto :EOF
 :: change all CHARSET characters to TRANS in ITEM
 :: RETURN = ITEM with all characters in CHARSET changed to TRANS
 :: NOTE: ITEM should have no internal double quotes; if present, double quotes are translated to single quotes(? TRUE, ?needed for CMD or TCC?) for the RETURN value
-setlocal
+setLocal
 set "__DEBUG_KEY=@1"
 set "__MEfn=translate_charset"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2272,7 +2408,7 @@ REM call :_echo_DEBUG_KEY charset="%charset%"
 REM call :_echo_DEBUG_KEY trans="%trans%"
 :: change any internal double quotes to chr(255) (avoids syntax errors during the character comparison and removal process) [ NOTE: may have internal double quotes, so no outer quotes for set; this also creates a problem with internal ()'s if the set is enclosed in a block, so use a goto around it as needed]
 if NOT DEFINED item ( goto :_translate_charset_LOOP_ch )
-set "item=%item:^"=¸%"
+set "item=%item:^"=Â¸%"
 ::
 :translate_charset_LOOP
 set "item_dest="
@@ -2303,10 +2439,10 @@ REM call :_echo_DEBUG_KEY item="%item%"
 ::
 :_translate_charset_RETURN
 :: return any double quotes to ITEM
-set "item=%item:¸=^"%"
+set "item=%item:Â¸=^"%"
 set "_RETval=%item%"
-REM call :_echo_DEBUG_KEY _RETVAL="%_RETVAL%"
-::( endlocal
+REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2314,7 +2450,7 @@ REM call :_echo_DEBUG_KEY _RETVAL="%_RETVAL%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2325,7 +2461,7 @@ goto :EOF
 :: change all CHARSET characters to TRANS in ITEM
 :: RETURN = ITEM with all characters in CHARSET changed to TRANS
 :: NOTE: ITEM should have no internal double quotes; if present, double quotes are translated to single quotes(? TRUE, ?needed for CMD or TCC?) for the RETURN value
-setlocal
+setLocal
 set "__DEBUG_KEY=@1"
 set "__MEfn=translate_charset_nocase"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2339,7 +2475,7 @@ REM call :_echo_DEBUG_KEY charset="%charset%"
 REM call :_echo_DEBUG_KEY trans="%trans%"
 :: change any internal double quotes to chr(255) (avoids syntax errors during the character comparison and removal process) [ NOTE: may have internal double quotes, so no outer quotes for set; this also creates a problem with internal ()'s if the set is enclosed in a block, so use a goto around it as needed]
 if NOT DEFINED item ( goto :_translate_charset_nocase_LOOP_ch )
-set "item=%item:^"=¸%"
+set "item=%item:^"=Â¸%"
 ::
 :translate_charset_LOOP
 set "item_dest="
@@ -2370,10 +2506,10 @@ REM call :_echo_DEBUG_KEY item="%item%"
 ::
 :_translate_charset_nocase_RETURN
 :: return any double quotes to ITEM
-set "item=%item:¸=^"%"
+set "item=%item:Â¸=^"%"
 set "_RETval=%item%"
-REM call :_echo_DEBUG_KEY _RETVAL="%_RETVAL%"
-::( endlocal
+REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2381,7 +2517,7 @@ REM call :_echo_DEBUG_KEY _RETVAL="%_RETVAL%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2393,7 +2529,7 @@ goto :EOF
 :: RETURN == false/true (aka ITEM# [1+]) [ false == NULL, true == 1+ ]
 :: NOTE: NULL items as "" or """" are supported
 :: NOTE: ITEM comparisons are case-independent
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_matching_item"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2421,7 +2557,7 @@ set "_RETval=%item_n%"
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: done ]
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2429,7 +2565,7 @@ REM call :_echo_DEBUG_KEY [ %__MEfn% :: done ]
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2438,8 +2574,8 @@ goto :EOF
 :$remove_matching_item ( ref_RETURN ITEM_X [ ITEMs ... ] )
 :_remove_matching_item ( ref_RETURN ITEM_X [ ITEMs ... ] )
 :: remove ITEM_X from list of ITEMs
-:: RETURN == SET of ITEMs with ITEM_X removed (all occurances)
-setlocal
+:: RETURN == SET of ITEMs with ITEM_X removed (all occurrences)
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_remove_matching_item"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2464,7 +2600,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 goto :_remove_matching_item_LOOP
 :_remove_matching_item_LOOP_DONE
 :_remove_matching_item_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2472,7 +2608,7 @@ goto :_remove_matching_item_LOOP
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2482,7 +2618,7 @@ goto :EOF
 :$create_list ( ref_RETURN [ ITEMs ... ] )
 :_create_list ( ref_RETURN [ ITEMs ... ] )
 :: RETURN == LIST of ITEMs
-setlocal
+setLocal
 set "__DEBUG_KEY=@c"
 set "__MEfn=_create_list"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2506,7 +2642,7 @@ goto :_create_list_LOOP
 if NOT DEFINED _RETval ( set "_RETval=""" )
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2514,7 +2650,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2523,7 +2659,7 @@ goto :EOF
 :$create_list_with_NULLs ( ref_RETURN [ ITEMs ... ] )
 :_create_list_with_NULLs ( ref_RETURN [ ITEMs ... ] )
 :: RETURN == LIST of ITEMs
-setlocal
+setLocal
 set "__DEBUG_KEY=@c"
 set "__MEfn=_create_list_with_NULLs"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2554,7 +2690,7 @@ goto :_create_list_with_NULLs_LOOP
 if NOT DEFINED _RETval ( set "_RETval=""" )
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2562,7 +2698,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2570,7 +2706,7 @@ goto :EOF
 :$$list_to_items ( ref_RETURN LIST )
 :: return separated LIST elements
 :: RETURN == separated LIST ITEM elements
-setlocal
+setLocal
 set "_RETval="
 set "_RETvar=%~1"
 set "list=%~2"
@@ -2590,7 +2726,7 @@ set _RETval=%_RETval% %arg%
 goto :_list_to_items_LOOP
 :_list_to_items_DONE
 :_list_to_items_RETURN
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2598,13 +2734,13 @@ goto :EOF
 :$$count_of ( ref_RETURN [ LIST ] )
 :: return number of ITEMs within LIST
 :: RETURN == number of ITEM(s) within LIST
-setlocal
+setLocal
 set "_RETval=0"
 set "_RETvar=%~1"
 set "list=%~2"
 call :$$count_of_items _RETval "%list:;=" "%"
 :$$count_of_RETURN
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2612,7 +2748,7 @@ goto :EOF
 :$$count_of_items ( ref_RETURN [ ITEMs ... ] )
 :: return separated LIST elements
 :: RETURN == number of ITEM(s)
-setlocal
+setLocal
 set "_RETval=0"
 set "_RETvar=%~1"
 :$$count_of_items_LOOP
@@ -2623,7 +2759,7 @@ set /a _RETval += 1
 goto :$$count_of_items_LOOP
 :$$count_of_items_LOOP_DONE
 :$$count_of_items_RETURN
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2633,7 +2769,7 @@ goto :EOF
 :_is_in_list ( ref_RETURN ITEM LIST )
 :: determine if ITEM is within LIST
 :: RETURN == (BOOLEAN: undef/1+ (ITEM# [1+])) whether ITEM is contained within the LIST
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_in_list"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2647,7 +2783,7 @@ if DEFINED list ( call :_is_matching_item _RETval "%item%" "%list:;=" "%" )
 :_is_in_list_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2655,7 +2791,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2664,7 +2800,7 @@ goto :EOF
 :$prepend_to_list ( ref_RETURN ITEM LIST )
 :_prepend_to_list ( ref_RETURN ITEM LIST )
 :: RETURN == LIST with ITEM prepended
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_prepend_to_list"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2685,7 +2821,7 @@ REM call :_echo_DEBUG_KEY 2
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 if NOT DEFINED _RETval ( set "_RETval=""" )
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2694,7 +2830,7 @@ goto :EOF
 :$append_to_list ( ref_RETURN ITEM LIST )
 :_append_to_list ( ref_RETURN ITEM LIST )
 :: RETURN == LIST with ITEM appended
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_append_to_list"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2712,7 +2848,7 @@ set "_RETval=%list%;%item%"
 :_append_to_list_RETURN
 if NOT DEFINED _RETval ( set "_RETval=""" )
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2720,7 +2856,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2729,7 +2865,7 @@ goto :EOF
 :$prepend_to_set ( ref_RETURN ITEM SET )
 :_prepend_to_set ( ref_RETURN ITEM SET )
 :: RETURN == SET/LIST with ITEM prepended (if not already in SET/LIST)
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_prepend_to_set"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2745,7 +2881,7 @@ if NOT DEFINED IN_list ( call :_prepend_to_list _RETval "%item%" "%list%" )
 :_prepend_to_set_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2754,7 +2890,7 @@ goto :EOF
 :$append_to_set ( ref_RETURN ITEM SET )
 :_append_to_set ( ref_RETURN ITEM SET )
 :: RETURN == SET/LIST with ITEM appended (if not already in SET/LIST)
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_append_to_set"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2771,7 +2907,7 @@ if NOT DEFINED IN_list ( call :_append_to_list _RETval "%item%" "%list%" )
 :_append_to_set_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2779,7 +2915,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2789,7 +2925,7 @@ goto :EOF
 :_prepend_to_pathlist ( ref_RETURN ITEM PATHLIST )
 :: NOTE: PATHLIST is treated as a SET of PATHs
 :: RETURN == PATHLIST with ITEM prepended (if not already in PATHLIST)
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_prepend_to_pathlist"
 set _RETvar=%~1
@@ -2802,8 +2938,8 @@ if DEFINED item ( call :_prepend_to_set _RETval "%item%" "%list%" )
 :_prepend_to_pathlist_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::endlocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
-endlocal & set %_RETvar%^=%_RETval%
+::endLocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2813,7 +2949,7 @@ goto :EOF
 :_append_to_pathlist ( ref_RETURN ITEM PATHLIST )
 :: NOTE: PATHLIST is treated as a SET of PATHs
 :: RETURN == PATHLIST with ITEM appended (if not already in PATHLIST)
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_append_to_pathlist"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2829,7 +2965,7 @@ if DEFINED item ( call :_append_to_set _RETval "%item%" "%list%" )
 :_append_to_pathlist_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2837,7 +2973,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2845,8 +2981,8 @@ goto :EOF
 :$$remove_from_list ( ref_RETURN ITEM LIST )
 :$remove_from_list ( ref_RETURN ITEM LIST )
 :_remove_from_list ( ref_RETURN ITEM LIST )
-:: RETURN == LIST with ITEM removed (all occurances)
-setlocal
+:: RETURN == LIST with ITEM removed (all occurrences)
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_remove_from_list"
 set "_RETval="
@@ -2855,8 +2991,8 @@ set "list=%~3"
 set "item=%~2"
 if DEFINED list ( call :_remove_matching_item _RETval "%item%" "%list:;=" "%" )
 :_remove_from_list_RETURN
-::endlocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
-endlocal & set %_RETvar%^=%_RETval%
+::endLocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2866,7 +3002,7 @@ goto :EOF
 :_create_pathlist ( ref_RETURN [ ITEMs ... ] )
 :: NOTE: PATHLIST is a SET of PATHs (no NULL PATHs; PATHs are normalized ITEMs [no trailing backslashes] )
 :: RETURN == PATHLIST of PATHs
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_create_pathlist"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2885,7 +3021,7 @@ goto :_create_pathlist_LOOP
 :_create_pathlist_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2893,7 +3029,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2903,7 +3039,7 @@ goto :EOF
 :_create_set ( ref_RETURN [ ITEMs ... ] )
 :: NOTE: SET is a LIST of ITEMs (with no repeated ITEMs)
 :: RETURN == SET of ITEMs
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_create_set"
 set "_RETvar=%~1"
@@ -2918,8 +3054,8 @@ call :_append_to_set _RETval "%item%" "%_RETval%"
 goto :_create_set_LOOP
 :_create_set_LOOP_DONE
 :_create_set_RETURN
-::endlocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
-endlocal & set %_RETvar%^=%_RETval%
+::endLocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2927,7 +3063,7 @@ goto :EOF
 :$$first_of ( ref_RETURN LIST )
 :$first_of ( ref_RETURN LIST )
 :_first_of ( ref_RETURN LIST )
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_first_of"
 set "_RETval="
@@ -2935,8 +3071,8 @@ set _RETvar=%~1
 set "list=%~2"
 if DEFINED list ( call :_first_of_items _RETval "%list:;=" "%" )
 :_first_of_RETURN
-::endlocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
-endlocal & set %_RETvar%^=%_RETval%
+::endLocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2944,7 +3080,7 @@ goto :EOF
 :$$first_of_items ( ref_RETURN [ ITEMs ... ] )
 :$first_of_items ( ref_RETURN [ ITEMs ... ] )
 :_first_of_items ( ref_RETURN [ ITEMs ... ] )
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_first_of_items"
 set _RETvar=%~1
@@ -2952,8 +3088,8 @@ set "item=%~2"
 if "%item%" == """" ( set "item=" )
 :_first_of_items_RETURN
 set "_RETval=%item%"
-::endlocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
-endlocal & set %_RETvar%^=%_RETval%
+::endLocal & if NOT 01 == 1.0 (set "%_RETvar%=%_RETval%") else (set "%_RETvar=%_RETval")
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2962,7 +3098,7 @@ goto :EOF
 :$remove_first_item ( ref_RETURN [ ITEMs ... ] )
 :_remove_first_item ( ref_RETURN [ ITEMs ... ] )
 :: RETURN == LIST of all ITEMs excepting the initial ITEM
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_remove_first_item"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -2982,7 +3118,7 @@ call :_append_to_list _RETval "%item%" "%_RETval%"
 goto :_remove_first_item_LOOP
 :_remove_first_item_LOOP_DONE
 :_remove_first_item_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -2990,7 +3126,7 @@ goto :_remove_first_item_LOOP
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -2999,7 +3135,7 @@ goto :EOF
 :$remove_first ( ref_RETURN LIST )
 :_remove_first ( ref_RETURN LIST )
 :: RETURN == LIST with first ITEM removed
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_remove_first"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3009,7 +3145,7 @@ set "list=%~2"
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY list="%list%"
 if DEFINED list ( call :_remove_first_item _RETval "%list:;=" "%" )
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3017,7 +3153,7 @@ if DEFINED list ( call :_remove_first_item _RETval "%list:;=" "%" )
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3026,7 +3162,7 @@ goto :EOF
 :$first_list_match ( ref_RETURN LIST1 LIST2 )
 :_first_list_match ( ref_RETURN LIST1 LIST2 )
 :: RETURN == first ITEM in LIST1 which is also contained in LIST2
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_first_list_match"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3047,7 +3183,7 @@ call :_is_in_list IS_match "%item%" "%list2%"
 if NOT DEFINED IS_match ( goto :_first_list_match_LOOP )
 set "_RETval=%item%"
 :_first_list_match_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3055,7 +3191,7 @@ set "_RETval=%item%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3064,7 +3200,7 @@ goto :EOF
 :$path_in_pathlist ( ref_RETURN FILENAME PATHLIST )
 :_path_in_pathlist ( ref_RETURN FILENAME PATHLIST )
 :: NOTE: FILENAME should be a simple filename, not a directory or filename with leading directory prefix. CMD will match these more complex paths, but TCC will not.
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_path_in_pathlist"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3078,7 +3214,7 @@ REM call :_echo_DEBUG_KEY pathlist="%pathlist%"
 set "_RETval=%~$PATH:2"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 :_path_in_pathlist_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3086,7 +3222,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3095,13 +3231,13 @@ goto :EOF
 :$path_in_PATH ( ref_RETURN FILENAME )
 :_path_in_PATH ( ref_RETURN FILENAME )
 :: NOTE: FILENAME should be a simple filename, not a directory or filename with leading directory prefix. CMD will match these more complex paths, but TCC will not.
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_path_in_PATH"
 set "_RETvar=%~1"
 call :_path_in_pathlist _RETval "%~2" ".;%PATH%"  &:: the current working directory is implied in %PATH% (and searched 1st); make this explicit for this search
 :_path_in_PATH_RETURN
-endlocal & set "%~1=%_RETval%"
+endLocal & set "%~1=%_RETval%"
 goto :EOF
 ::
 
@@ -3110,7 +3246,7 @@ goto :EOF
 :$path_of_file_in_pathlist ( ref_RETURN FILENAME PATHLIST [EXTENSIONLIST] )
 :_path_of_file_in_pathlist ( ref_RETURN FILENAME PATHLIST [EXTENSIONLIST] )
 :: NOTE: FILENAME should be a simple filename, not a directory or filename with leading directory prefix. CMD will match these more complex paths, but TCC will not.
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_path_of_file_in_pathlist"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3123,6 +3259,7 @@ REM call :_echo_DEBUG_KEY pathlist="%~3"
 REM call :_echo_DEBUG_KEY extensionList="%extensionList%"
 if NOT DEFINED extensionList ( goto :_path_of_file_in_pathlist_EXTS_NULL )
 :_path_of_file_in_pathlist_EXTS
+REM echo call :_path_of_file_in_pathlist_with_extensions _RETval "%~2" "%~3" "%extensionList:;=" "%"
 call :_path_of_file_in_pathlist_with_extensions _RETval "%~2" "%~3" "%extensionList:;=" "%"
 goto :_path_of_file_in_pathlist_DONE
 :_path_of_file_in_pathlist_EXTS_NULL
@@ -3130,7 +3267,7 @@ call :_path_in_pathlist _RETval "%~2" "%~3"
 :_path_of_file_in_pathlist_DONE
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 :_path_of_file_in_pathlist_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3138,7 +3275,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3147,7 +3284,7 @@ goto :EOF
 :$path_of_file_in_pathlist_with_extensions ( ref_RETURN FILENAME PATHLIST [[EXTENSION1] [EXTENSION2] ...]  )
 :_path_of_file_in_pathlist_with_extensions ( ref_RETURN FILENAME PATHLIST [[EXTENSION1] [EXTENSION2] ...]  )
 :: NOTE: FILENAME should be a simple filename, not a directory or filename with leading directory prefix. CMD will match these more complex paths, but TCC will not.
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_path_of_file_in_pathlist_with_extensions"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3164,7 +3301,8 @@ set "_RETval_level="
 :_path_of_file_in_pathlist_with_extensions_LOOP
 shift
 REM call :_echo_DEBUG_KEY ext_N="%~1"
-if "%~1" == "" ( goto :_path_of_file_in_pathlist_with_extensions_RETURN )
+set item_raw=%1
+if NOT defined item_raw ( goto :_path_of_file_in_pathlist_with_extensions_RETURN )
 call :_path_in_pathlist _f_path "%_f%%~1" "%pathlist%"
 if "%_f_path%" EQU "" ( goto :_path_of_file_in_pathlist_with_extensions_LOOP )
 REM call :_echo_DEBUG_KEY _f_path="%_f_path%"
@@ -3180,7 +3318,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 REM call :_echo_DEBUG_KEY _RETval_level="%_RETval_level%"
 goto :_path_of_file_in_pathlist_with_extensions_LOOP
 :_path_of_file_in_pathlist_with_extensions_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3188,7 +3326,7 @@ goto :_path_of_file_in_pathlist_with_extensions_LOOP
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3197,12 +3335,12 @@ goto :EOF
 :$path_of_file_in_PATH ( ref_RETURN FILENAME EXTENSIONLIST )
 :_path_of_file_in_PATH ( ref_RETURN FILENAME EXTENSIONLIST )
 :: NOTE: FILENAME should be a simple filename, not a directory or filename with leading directory prefix. CMD will match these more complex paths, but TCC will not.
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_path_of_file_in_PATH"
 call :_path_of_file_in_pathlist _RETval "%~2" "%PATH%" "%~3"
 :_path_of_file_in_PATH_RETURN
-endlocal & set "%~1=%_RETval%"
+endLocal & set "%~1=%_RETval%"
 goto :EOF
 ::
 
@@ -3212,7 +3350,7 @@ goto :EOF
 :_path_of_item_in_pathlist ( ref_RETURN ITEMNAME PATHLIST )
 :: RETURN == PATH of first ITEMNAME found within PATHLIST (NULL if not found)
 :: NOTE: ITEMNAME can be a simple filename, a path, or filename with leading prefix
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_path_of_item_in_pathlist"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3226,7 +3364,7 @@ call :_path_of_item_in_paths _RETval "%item%" "%pathlist:;=" "%"
 :_path_of_file_in_paths_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3234,7 +3372,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3244,7 +3382,7 @@ goto :EOF
 :_path_of_item_in_paths ( ref_RETURN ITEMNAME PATH1 [[PATH2] ...] )
 :: RETURN == PATH of ITEMNAME from within PATHs (NULL if not found)
 :: NOTE: ITEMNAME can be a simple filename, a path, or filename with leading partial prefix
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_path_of_item_in_paths"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3257,13 +3395,14 @@ REM call :_echo_DEBUG_KEY itemname="%item%"
 :_path_of_item_in_paths_LOOP
 shift
 REM call :_echo_DEBUG_KEY path_N="%~1"
-if "%~1" == "" ( goto :_path_of_item_in_paths_RETURN )
+set item_raw=%1
+if NOT defined item_raw ( goto :_path_of_item_in_paths_RETURN )
 if EXIST "%~1\%item%" ( set "_RETval=%~1\%item%" & goto :_path_of_item_in_paths_RETURN )
 goto :_path_of_item_in_paths_LOOP
 :_path_of_item_in_paths_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3271,7 +3410,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3289,13 +3428,13 @@ goto :EOF
 :_FQ_fullname_of
 :_fully_qualified_form_of
 :: RETURN == fully qualified name of PATH
-:: ToDO: ? pull out _fullname_of to seperate function in keeping with _drive_of / _FQ_drive_of and _dir_of / _FQ_dir_of
+:: ToDO: ? pull out _fullname_of to separate function in keeping with _drive_of / _FQ_drive_of and _dir_of / _FQ_dir_of
 :: NOTE: special processing to deal correctly with the case of "<DRIVE>:" ("<DRIVE>:" == "<DRIVE>:" == "<DRIVE>:.", NOT "<DRIVE>:.")
 :: NOTE: _fullname_of("") == ""
 :: NOTE: _fullname_of("\\") == _fullname_of("\") == _fullname_of("\.") == "<CURRENTDRIVE>:\"
 :: NOTE: _fullname_of("c:") == _fullname_of("c:.")
-:: NOTE: special processing is needed to deal with the fact that TCC acts out with almost unsuppressible errors for inaccessible and UNC PATHs [which is "WAD" per developer [meh, see URLref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
-setlocal
+:: NOTE: special processing is needed to deal with the fact that TCC acts out with almost unsuppressible errors for inaccessible and UNC PATHs [which is "WAD" per developer [meh, see ref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_fullname_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3324,7 +3463,7 @@ REM call :_echo_DEBUG_KEY _RETval_DR="%_RETval%"
 :_fullname_of_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3332,7 +3471,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3341,14 +3480,14 @@ goto :EOF
 :$shortname_of ( ref_RETURN PATH )
 :_shortname_of ( ref_RETURN PATH )
 :: RETURN == fully qualified short name of PATH
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_shortname_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
 set _RETvar=%~1
 call :_param_tilde_SF _RETval "%~2"
 call :_FQ_fullname_of _RETval "%_RETval%"
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3363,7 +3502,7 @@ goto :EOF
 :: NOTE: _dir_of("\\") == _dir_of("\") == "\"
 :: NOTE: _dir_of("c:") == _dir_of("c:.")
 :: NOTE: _dir_of("c:\") == _dir_of("c:\.") == "\"
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_dir_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3386,7 +3525,7 @@ call :_rtrim _RETval "%_RETval%" "\"
 if NOT DEFINED _RETval (set _RETval=\)
 ::set "_RETval=%drive%%_RETval%"
 :_dir_of_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3394,7 +3533,7 @@ if NOT DEFINED _RETval (set _RETval=\)
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3407,7 +3546,7 @@ goto :EOF
 :: NOTE: _FQ_dir_of("\\") == _FQ_dir_of("\")
 :: NOTE: _FQ_dir_of("c:") == _FQ_dir_of("c:.")
 :: NOTE: _FQ_dir_of("c:\") == _FQ_dir_of("c:\.") == "c:\"
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_FQ_dir_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3431,7 +3570,7 @@ if NOT DEFINED drive ( set "drive=%~d0" )
 REM call :_echo_DEBUG_KEY drive="%drive%"
 set "_RETval=%drive%%_RETval%"
 :_FQ_dir_of_RETURN
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3441,7 +3580,7 @@ goto :EOF
 :_extension_of ( ref_RETURN PATH )
 :: RETURN == extension of PATH
 :: NOTE: _extension_of "" == "" ; _extension_of "c:" == "" ; _extension_of "\\" == "" _extension_of "\" == ""
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_extension_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3455,7 +3594,7 @@ call :_rewrite_path_to_FQ_local _RETval _ "%_RETval%"
 call :_param_tilde_X _RETval "%_RETval%"
 call :_rtrim _RETval "%_RETval%" "\"
 :_extension_of_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3463,7 +3602,7 @@ call :_rtrim _RETval "%_RETval%" "\"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3471,9 +3610,9 @@ goto :EOF
 :$$param_tilde_PNX ( ref_RETURN PATH )
 :$param_tilde_PNX ( ref_RETURN PATH )
 :_param_tilde_PNX ( ref_RETURN PATH )
-:: NOTE: for TCC, assume that PATH is on (or has been forced onto) an accessible drive and not a UNC pathname [necessary to avoid unsupressable TCC parsing errors; which is "WAD" per developer [meh, see URLref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
+:: NOTE: for TCC, assume that PATH is on (or has been forced onto) an accessible drive and not a UNC pathname [necessary to avoid insuppressible TCC parsing errors; which is "WAD" per developer [meh, see ref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
 :: RETURN == path, name, and extension of PATH
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_param_tilde_PNX"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3482,7 +3621,7 @@ set "_RETval=%~2"
 if NOT DEFINED _RETval ( goto :_param_tilde_PNX_RETURN )
 set "_RETval=%~pnx2"
 :_param_tilde_PNX_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3490,7 +3629,7 @@ set "_RETval=%~pnx2"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3498,9 +3637,9 @@ goto :EOF
 :$$param_tilde_P ( ref_RETURN PATH )
 :$param_tilde_P ( ref_RETURN PATH )
 :_param_tilde_P ( ref_RETURN PATH )
-:: NOTE: for TCC, assume that PATH is on (or has been forced onto) an accessible drive and not a UNC pathname [necessary to avoid unsupressable TCC parsing errors; which is "WAD" per developer [meh, see URLref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
+:: NOTE: for TCC, assume that PATH is on (or has been forced onto) an accessible drive and not a UNC pathname [necessary to avoid insuppressible TCC parsing errors; which is "WAD" per developer [meh, see ref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
 :: RETURN == directory of PATH
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_param_tilde_P"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3512,7 +3651,7 @@ REM call :_echo_DEBUG_KEY 1="%~1"
 REM call :_echo_DEBUG_KEY 2="%~2"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 :_param_tilde_P_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3520,7 +3659,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3528,9 +3667,9 @@ goto :EOF
 :$$param_tilde_NX ( ref_RETURN PATH )
 :$param_tilde_NX ( ref_RETURN PATH )
 :_param_tilde_NX ( ref_RETURN PATH )
-:: NOTE: for TCC, assume that PATH is on an accessible drive and not a UNC pathname [necessary to avoid unsupressable TCC parsing errors; which is "WAD" per developer [meh, see URLref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
+:: NOTE: for TCC, assume that PATH is on an accessible drive and not a UNC pathname [necessary to avoid insuppressible TCC parsing errors; which is "WAD" per developer [meh, see ref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
 :: RETURN == name & extension of PATH
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_param_tilde_NX"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3539,7 +3678,7 @@ set "_RETval=%~2"
 if NOT DEFINED _RETval ( goto :_param_tilde_NX_RETURN )
 set "_RETval=%~nx2"
 :_param_tilde_NX_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3547,7 +3686,7 @@ set "_RETval=%~nx2"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3555,9 +3694,9 @@ goto :EOF
 :$$param_tilde_X ( ref_RETURN PATH )
 :$param_tilde_X ( ref_RETURN PATH )
 :_param_tilde_X ( ref_RETURN PATH )
-:: NOTE: for TCC, assume that PATH is on an accessible drive and not a UNC pathname [necessary to avoid unsupressable TCC parsing errors; which is "WAD" per developer [meh, see URLref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
+:: NOTE: for TCC, assume that PATH is on an accessible drive and not a UNC pathname [necessary to avoid insuppressible TCC parsing errors; which is "WAD" per developer [meh, see ref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
 :: RETURN == extension of PATH
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_param_tilde_X"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3566,7 +3705,7 @@ set "_RETval=%~2"
 if NOT DEFINED _RETval ( goto :_param_tilde_X_RETURN )
 set "_RETval=%~x2"
 :_param_tilde_X_RETURN
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3574,7 +3713,7 @@ set "_RETval=%~x2"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3582,12 +3721,12 @@ goto :EOF
 :$$param_tilde_SF ( ref_RETURN PATH )
 :$param_tilde_SF ( ref_RETURN PATH )
 :_param_tilde_SF ( ref_RETURN PATH )
-:: NOTE: for TCC, assume that PATH is on (or has been forced onto) an accessible drive and not a UNC pathname [necessary to avoid unsupressable TCC parsing errors; which is "WAD" per developer [meh, see URLref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
+:: NOTE: for TCC, assume that PATH is on (or has been forced onto) an accessible drive and not a UNC pathname [necessary to avoid insuppressible TCC parsing errors; which is "WAD" per developer [meh, see ref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
 :: RETURN == short full name of PATH [ PATH is either absolute or assumed to be relative to %CD%]
-:: URLref: [Bug and workaround in %~sf0 ] https://groups.google.com/d/topic/alt.msdos.batch.nt/CrLJbBzgdkk/discussion
-:: URLref: [Discussion of bug in %~s0 syntax ] https://groups.google.com/d/topic/alt.msdos.batch.nt/TkUsCQuL_bg/discussion
-:: URLref: [CMD percent-tilde Syntax] http://ss64.com/nt/syntax-args.html @@ http://www.webcitation.org/67qH4Ri09
-setlocal
+:: ref: [Bug and workaround in %~sf0 ] https://groups.google.com/d/topic/alt.msdos.batch.nt/CrLJbBzgdkk/discussion
+:: ref: [Discussion of bug in %~s0 syntax ] https://groups.google.com/d/topic/alt.msdos.batch.nt/TkUsCQuL_bg/discussion
+:: ref: [CMD percent-tilde Syntax] http://ss64.com/nt/syntax-args.html @@ http://www.webcitation.org/67qH4Ri09
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_param_tilde_SF"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3596,7 +3735,7 @@ set "_RETval=%~2"
 if NOT DEFINED _RETval ( goto :_param_tilde_SF_RETURN )
 set "_RETval=%~sf2"
 :_param_tilde_SF_RETURN
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3604,10 +3743,10 @@ goto :EOF
 :$$param_tilde_A ( ref_RETURN PATH )
 :$param_tilde_A ( ref_RETURN PATH )
 :_param_tilde_A ( ref_RETURN PATH )
-:: NOTE: for TCC, assume that PATH is on (or has been forced onto) an accessible drive and not a UNC pathname [necessary to avoid unsupressable TCC parsing errors; which is "WAD" per developer [meh, see URLref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
+:: NOTE: for TCC, assume that PATH is on (or has been forced onto) an accessible drive and not a UNC pathname [necessary to avoid insuppressible TCC parsing errors; which is "WAD" per developer [meh, see ref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
 :: RETURN == attributes of full name of PATH [ PATH is either absolute or assumed to be relative to %CD%]
-:: URLref: [CMD percent-tilde Syntax] http://ss64.com/nt/syntax-args.html @@ http://www.webcitation.org/67qH4Ri09
-setlocal
+:: ref: [CMD percent-tilde Syntax] http://ss64.com/nt/syntax-args.html @@ http://www.webcitation.org/67qH4Ri09
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_param_tilde_A"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -3616,7 +3755,7 @@ set "_RETval=%~2"
 if NOT DEFINED _RETval ( goto :_param_tilde_SF_RETURN )
 set "_RETval=%~a2"
 :_param_tilde_A_RETURN
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3624,15 +3763,15 @@ goto :EOF
 :$$param_tilde_DPNX ( ref_RETURN PATH )
 :$param_tilde_DPNX ( ref_RETURN PATH )
 :_param_tilde_DPNX ( ref_RETURN PATH )
-:: NOTE: for TCC, assume that PATH is on (or has been forced onto) an accessible drive and not a UNC pathname [necessary to avoid unsupressable TCC parsing errors; which is "WAD" per developer [meh, see URLref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
+:: NOTE: for TCC, assume that PATH is on (or has been forced onto) an accessible drive and not a UNC pathname [necessary to avoid insuppressible TCC parsing errors; which is "WAD" per developer [meh, see ref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://www.webcitation.org/63ua1bpOk]]
 :: RETURN == drive, path, name, and extension of PATH
-setlocal
+setLocal
 set "_RETvar=%~1"
 set "_RETval=%~2"
 if NOT DEFINED _RETval ( goto :_param_tilde_PNX_RETURN )
 set "_RETval=%~dpnx2"
 :_param_tilde_PNX_RETURN
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3641,16 +3780,16 @@ goto :EOF
 :$attributes_of ( ref_RETURN PATH )
 :_attributes_of ( ref_RETURN PATH )
 :: RETURN == attribute string for PATH ("", if PATH not accessible)
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_attributes_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
 set _RETvar=%~1
-:: TCC can't handle nonexistant PATHs (especially non-existant drives)
+:: TCC can't handle nonexistent PATHs (especially non-existent drives)
 if NOT EXIST "%~2" ( goto :_attributes_of_RETURN )
 set "_RETval=%~a2"
 :_attributes_of_RETURN
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3660,19 +3799,19 @@ goto :EOF
 :_size_of ( ref_RETURN FILE )
 :: RETURN == size of FILE
 :: NOTE: _size_of(FILE; FILE not accessible) == ""
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_size_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
 set "_RETval="
 set "_RETvar=%~1"
-:: TCC can't handle nonexistant PATHs (especially non-existant drives)
+:: TCC can't handle nonexistent PATHs (especially non-existent drives)
 if NOT EXIST "%~2" ( goto :_size_of_RETURN )
 set "_RETval=%~z2"
 :_size_of_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3680,7 +3819,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3693,14 +3832,14 @@ goto :EOF
 :: NOTE: _filetime_of(PATH; PATH not accessible) == ""
 :: ToDO: check assumptions regarding leading zeros in "~tN" substitution for all time sections
 :: ToDO: FIX: time changes by 60 minutes with change in DST ... leave this as LOCAL time ... create _filetime_GMT_of()
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_filetime_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
 set "_RETval="
 set "_RETvar=%~1"
 if NOT EXIST "%~2" ( goto :_filetime_of_RETURN )
-set "_RETval=%~t2"
+set "_RETval=%~t2" &:: format is 'MM/DD/YYYY HH:mm A/PM' [eg, '08/19/2018 12:47 PM']
 if NOT DEFINED _RETval ( goto :_filetime_of_RETURN )
 :: transform to comparable strings
 if 1.0 == 1 ( goto :_filetime_of_TCC_transform ) &:: TCC uses a different format for ~tN time/date values
@@ -3713,6 +3852,9 @@ set "minute=%_RETval:~14,2%"
 set "ampm=%_RETval:~17,1%"
 if "%hour%" == "12" ( set "hour=00" )
 if /i "%ampm%" == "p" (
+    rem numbers with leading 0's are seen as octal numbers by SET; correct 08 and 09
+    if "%hour%"=="08" set hour=8
+    if "%hour%"=="09" set hour=9
     set /a hour += 12
     )
 goto :_filetime_of_SET_RETval
@@ -3731,7 +3873,7 @@ set "_RETval=%year%-%month%-%day%.%hour%%minute%"
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 REM call :_echo_DEBUG_KEY ~t2="%~t2"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3739,7 +3881,7 @@ REM call :_echo_DEBUG_KEY ~t2="%~t2"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3748,14 +3890,14 @@ goto :EOF
 :$is_archive ( ref_RETURN PATH )
 :_is_archive ( ref_RETURN PATH )
 :: RETURN == (BOOLEAN as undef/1) whether PATH is a directory
-:: NOTE: URLref: http://stackoverflow.com/a/3728742/43774 from http://stackoverflow.com/questions/138981/how-do-i-test-if-a-file-is-a-directory-in-a-batch-script
-setlocal
+:: NOTE: ref: http://stackoverflow.com/a/3728742/43774 from http://stackoverflow.com/questions/138981/how-do-i-test-if-a-file-is-a-directory-in-a-batch-script
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_archive"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
 set "_RETval="
 set "_RETvar=%~1"
-:: TCC can't handle nonexistant PATHs (especially non-existant drives)
+:: TCC can't handle nonexistent PATHs (especially non-existent drives)
 if NOT EXIST "%~2" ( goto :_is_archive_RETURN )
 set "attr=%~a2"
 set "attr_bit=%attr:~2,1%"
@@ -3763,7 +3905,7 @@ if /i "%attr_bit%"=="a" (set "_RETval=1")
 :_is_archive_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3771,7 +3913,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3780,14 +3922,14 @@ goto :EOF
 :$is_dir ( ref_RETURN PATH )
 :_is_dir ( ref_RETURN PATH )
 :: RETURN == (BOOLEAN as undef/1) whether PATH is a directory
-:: NOTE: URLref: http://stackoverflow.com/a/3728742/43774 from http://stackoverflow.com/questions/138981/how-do-i-test-if-a-file-is-a-directory-in-a-batch-script
-setlocal
+:: NOTE: ref: http://stackoverflow.com/a/3728742/43774 from http://stackoverflow.com/questions/138981/how-do-i-test-if-a-file-is-a-directory-in-a-batch-script
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_dir"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
 set "_RETval="
 set "_RETvar=%~1"
-:: TCC can't handle nonexistant PATHs (especially non-existant drives)
+:: TCC can't handle nonexistent PATHs (especially non-existent drives)
 if NOT EXIST "%~2" ( goto :_is_dir_RETURN )
 set "attr=%~a2"
 set "attr_bit=%attr:~0,1%"
@@ -3795,7 +3937,7 @@ if /i "%attr_bit%"=="d" (set "_RETval=1")
 :_is_dir_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3803,7 +3945,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3812,14 +3954,14 @@ goto :EOF
 :$is_file ( ref_RETURN PATH )
 :_is_file ( ref_RETURN PATH )
 :: RETURN == (BOOLEAN as undef/1) whether PATH is a directory
-:: NOTE: URLref: http://stackoverflow.com/a/3728742/43774 from http://stackoverflow.com/questions/138981/how-do-i-test-if-a-file-is-a-directory-in-a-batch-script
-setlocal
+:: NOTE: ref: http://stackoverflow.com/a/3728742/43774 from http://stackoverflow.com/questions/138981/how-do-i-test-if-a-file-is-a-directory-in-a-batch-script
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_file"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
 set "_RETval="
 set "_RETvar=%~1"
-:: TCC can't handle nonexistant PATHs (especially non-existant drives)
+:: TCC can't handle nonexistent PATHs (especially non-existent drives)
 if NOT EXIST "%~2" ( goto :_is_file_RETURN )
 set "attr=%~a2"
 set "attr_bit=%attr:~0,1%"
@@ -3827,7 +3969,7 @@ if /i "%attr_bit%"=="-" (set "_RETval=1")
 :_is_file_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3835,7 +3977,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3844,14 +3986,14 @@ goto :EOF
 :$is_hidden ( ref_RETURN PATH )
 :_is_hidden ( ref_RETURN PATH )
 :: RETURN == (BOOLEAN as undef/1) whether PATH is hidden
-:: NOTE: URLref: http://stackoverflow.com/a/3728742/43774 from http://stackoverflow.com/questions/138981/how-do-i-test-if-a-file-is-a-directory-in-a-batch-script
-setlocal
+:: NOTE: ref: http://stackoverflow.com/a/3728742/43774 from http://stackoverflow.com/questions/138981/how-do-i-test-if-a-file-is-a-directory-in-a-batch-script
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_hidden"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
 set "_RETval="
 set "_RETvar=%~1"
-:: TCC can't handle nonexistant PATHs (especially non-existant drives)
+:: TCC can't handle nonexistent PATHs (especially non-existent drives)
 if NOT EXIST "%~2" ( goto :_is_hidden_RETURN )
 set "attr=%~a2"
 set "attr_bit=%attr:~3,1%"
@@ -3859,7 +4001,7 @@ if /i "%attr_bit%"=="h" (set "_RETval=1")
 :_is_hidden_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3867,7 +4009,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3876,14 +4018,14 @@ goto :EOF
 :$is_readonly ( ref_RETURN PATH )
 :_is_readonly ( ref_RETURN PATH )
 :: RETURN == (BOOLEAN as undef/1) whether PATH is readonly (locked)
-:: NOTE: URLref: http://stackoverflow.com/a/3728742/43774 from http://stackoverflow.com/questions/138981/how-do-i-test-if-a-file-is-a-directory-in-a-batch-script
-setlocal
+:: NOTE: ref: http://stackoverflow.com/a/3728742/43774 from http://stackoverflow.com/questions/138981/how-do-i-test-if-a-file-is-a-directory-in-a-batch-script
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_readonly"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
 set "_RETval="
 set "_RETvar=%~1"
-:: TCC can't handle nonexistant PATHs (especially non-existant drives)
+:: TCC can't handle nonexistent PATHs (especially non-existent drives)
 if NOT EXIST "%~2" ( goto :_is_readonly_RETURN )
 set "attr=%~a2"
 set "attr_bit=%attr:~1,1%"
@@ -3891,7 +4033,7 @@ if /i "%attr_bit%"=="r" (set "_RETval=1")
 :_is_readonly_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3899,7 +4041,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3908,14 +4050,14 @@ goto :EOF
 :$is_system ( ref_RETURN PATH )
 :_is_system ( ref_RETURN PATH )
 :: RETURN == (BOOLEAN as undef/1) whether PATH is a directory
-:: NOTE: URLref: http://stackoverflow.com/a/3728742/43774 from http://stackoverflow.com/questions/138981/how-do-i-test-if-a-file-is-a-directory-in-a-batch-script
-setlocal
+:: NOTE: ref: http://stackoverflow.com/a/3728742/43774 from http://stackoverflow.com/questions/138981/how-do-i-test-if-a-file-is-a-directory-in-a-batch-script
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_is_system"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
 set "_RETval="
 set "_RETvar=%~1"
-:: TCC can't handle nonexistant PATHs (especially non-existant drives)
+:: TCC can't handle nonexistent PATHs (especially non-existent drives)
 if NOT EXIST "%~2" ( goto :_is_system_RETURN )
 set "attr=%~a2"
 set "attr_bit=%attr:~4,1%"
@@ -3923,7 +4065,7 @@ if /i "%attr_bit%"=="s" (set "_RETval=1")
 :_is_system_RETURN
 REM call :_echo_DEBUG_KEY _RETvar="%_RETvar%"
 REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
-::( endlocal
+::( endLocal
 ::  ( if "%_RETvar%" NEQ "" ( if NOT 01 == 1.0 (
 ::      set "%_RETvar%=%_RETval%"
 ::      ) else (
@@ -3931,7 +4073,7 @@ REM call :_echo_DEBUG_KEY _RETval="%_RETval%"
 ::      ))
 ::call :_echo_item_DEBUG_KEY "%__DEBUG%" "%__DEBUG_KEY%" "%__ME%" "%__MEfn%" "[ %__MEfn% :: done ]"
 ::)
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3940,8 +4082,8 @@ goto :EOF
 :$is_link ( ref_RETURN PATH )
 :_is_link ( ref_RETURN PATH )
 :: RETURN == (BOOLEAN as undef/1) whether PATH is a link (symbolic link, includes junctions)
-:: NOTE: TCC attibute expansion is bugged, and doesn't display the link attribute correctly
-setlocal
+:: NOTE: TCC attribute expansion is bugged, and doesn't display the link attribute correctly
+setLocal
 set "_RETval="
 set "_RETvar=%~1"
 if NOT EXIST "%~2" ( goto :_is_link_RETURN )
@@ -3957,7 +4099,7 @@ if %@wild[%attr%,*l*] == 1 (
 :_is_link_TEST
 if /i "%attr_bit%"=="l" (set "_RETval=1")
 :_is_link_RETURN
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -3966,7 +4108,7 @@ goto :EOF
 :$is_junction ( ref_RETURN PATH )
 :_is_junction ( ref_RETURN PATH )
 :: RETURN == (BOOLEAN as undef/1) whether PATH is a junction
-setlocal
+setLocal
 set "_RETval="
 set "_RETvar=%~1"
 if NOT EXIST "%~2" ( goto :_is_junction_RETURN )
@@ -3997,7 +4139,7 @@ set symlink= [%symlink%
 call set path_name=%%_dir_entry:%symlink%=%%
 if "%path_basename%" == "%path_name%" ( set _RETval=1 )
 :_is_junction_RETURN
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -4007,7 +4149,7 @@ goto :EOF
 :_readsymlink_of ( ref_RETURN PATH )
 :: RETURN == target path of PATH (in raw, non-fully-qualified / non-canonicalized form); NULL if PATH is not a link/junction
 :: NOTE: only follows a single link (if present)
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_readsymlink_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -4039,8 +4181,8 @@ set _RETval=%_RETval:~0,-1%
 :_readsymlink_of_FOUND
 :_readsymlink_of_DONE
 :_readsymlink_of_RETURN
-REM call :_echo_DEBUG_KEY _RETval=%_RETVal%
-endlocal & set %_RETvar%^=%_RETval%
+REM call :_echo_DEBUG_KEY _RETval=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -4050,8 +4192,8 @@ goto :EOF
 :_readlink_of ( ref_RETURN PATH )
 :: RETURN == fully qualified target path of PATH; NULL if PATH is not a link/junction
 :: NOTE: only follows a single link (if present)
-:: NOTE: using _fq_fullname for full qualification to deal with difficult special cases (and nasty TCC drive/UNC bugs [URLref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://webcitation.org/63ua1bpOk])
-setlocal
+:: NOTE: using _fq_fullname for full qualification to deal with difficult special cases (and nasty TCC drive/UNC bugs [ref: http://jpsoft.com/forums/threads/using-dp1-for-paths-with-unavailable-drives.3450 @@ http://webcitation.org/63ua1bpOk])
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_readlink_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -4067,8 +4209,8 @@ if NOT DEFINED _RETval ( goto :_readlink_of_RETURN )
 call :_FQ_fullname_of _RETval "%_RETval%"
 :_readlink_of_DONE
 :_readlink_of_RETURN
-REM call :_echo_DEBUG_KEY _RETval=%_RETVal%
-endlocal & set %_RETvar%^=%_RETval%
+REM call :_echo_DEBUG_KEY _RETval=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
@@ -4080,7 +4222,7 @@ goto :EOF
 :: NOTE: MAX_DEPTH is used to avoid an infinite loop for circular link references
 :: NOTE: similar to "realpath" or "readlink -f"
 :: NOTE: ToDO: research changing all parent directories into real paths (for a true canonical real_path); currently, symbolic links in PARENTs are not dereferenced
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=_realpath_of"
 REM call :_echo_DEBUG_KEY [ %__MEfn% :: start ]
@@ -4102,17 +4244,18 @@ goto :_realpath_of_LOOP
 :_realpath_of_FOUND
 call :_FQ_fullname_of _RETval "%_RETval%"
 :_realpath_of_DONE
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
 ::
 :$$ascii_chr ( ref_RETURN [ ASCII_CODEs ... ] )
-:: RETURN == ASCII character correspondong to the provided ASCII code point
+:$ascii_chr
+:: RETURN == ASCII character corresponding to the provided ASCII code point
 :: ASCII_CODE == desired ASCII character code
 :: ref: <https://stackoverflow.com/a/49959194/43774> @@ <https://archive.is/zRRJt#29%>
 :: ref: <https://www.dostips.com/forum/viewtopic.php?f=3&t=5326&start=105> @@ <https://archive.is/FnTRi>
-setlocal
+setLocal
 set "__DEBUG_KEY=@"
 set "__MEfn=$ascii_chr"
 set "_RETval="
@@ -4130,8 +4273,8 @@ set "_RETval=%_RETval%%ch%"
 goto :_ascii_chr_LOOP
 :_ascii_chr_DONE
 :_ascii_chr_RETURN
-endlocal & set %_RETvar%^=%_RETval%
+endLocal & set %_RETvar%^=%_RETval%
 goto :EOF
 ::
 
-:: end :: FUNCTIONS (library:rev76)
+:: end :: FUNCTIONS (library:rev81)
