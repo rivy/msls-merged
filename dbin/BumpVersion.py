@@ -11,9 +11,9 @@ import time
 # Written by Alan Klietz (https://u-tools.com/msls)
 #
 
-szManifestFile = '../ls/ls.manifest'
-szRcFile = "../ls/ls.rc"
-szConfigFile = "../common/config.h"
+szManifestFile = '../src/ls/ls.manifest'
+szRcFile = "../src/ls/ls.rc"
+szConfigFile = "../src/common/config.h"
 
 gstrVer = None
 gstrFullVer = None

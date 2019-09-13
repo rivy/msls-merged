@@ -33,13 +33,12 @@ set "ERRORLEVEL="
 if /I "%CC%"=="cl" if NOT DEFINED VCVARS_ARE_SET ( echo Missing `%CC%`: attempting VCvars setup & if EXIST "%__dp0%dbin\VCvars.BAT" ( call "%__dp0%dbin\VCvars.BAT" ) else ( call VCVars 2>NUL ) )
 call %CC% >NUL 2>NUL && (
     for /D %%d in (%projects%) DO @(
-        if /i NOT "%%d" == "%build_dir_default%" ( if /i NOT "%%d" == "%BUILD_DIR%" (
-            echo [%%d @ "%__dp0%%%d"]
-            cd "%__dp0%%%d"
-            set "BUILD_DIR=%BUILD_DIR%\%%d"
-            call echo INFO: building into "%%BUILD_DIR%%"
-            call build %* || ( echo ERR!: build failure >&2 & set "ERRORLEVEL=255" )
-        ))
+        echo [%%d @ "%__dp0%src\%%d"]
+        cd "%__dp0%src\%%d"
+        set "BUILD_DIR=%BUILD_DIR%\%%d"
+        call echo INFO: building into "%%BUILD_DIR%%"
+        call build %* || ( echo ERR!: build failure >&2 & set "ERRORLEVEL=255" )
+        )
     )
     :: regenerate any needed environment
     cd "%__dp0%"
