@@ -1,0 +1,196 @@
+name: CICD
+
+# Copyright (C) 2020 ~ Roy Ivy III <rivy.dev@gmail.com>; MIT+Apache-2.0 license
+
+# spell-checker:ignore (abbrev/acronyms) ASAN CICD CodeCOV LLVM MSVC MacOS MinGW OSID TSAN UBSAN
+# spell-checker:ignore (env/flags) CFLAGS CXXFLAGS Ccodegen Coverflow LDFLAGS fsanitize noprofile norc pipefail
+# spell-checker:ignore (jargon) SHAs deps falsey softprops toolchain truthy
+# spell-checker:ignore (names) Bionic Bionic's Peltoche Xenial ilammy rivy
+# spell-checker:ignore (shell/tools) chmod choco clippy cmake ctest dmake dpkg esac fakeroot gmake grcov halium lcov libssl libtsan mkdir popd printf pushd rustc rustfmt rustup shopt valgrind xargs xcode
+# spell-checker:ignore (misc) alnum gnueabihf issuecomment libc libncurses maint multilib ncurses nullglob onexitbegin onexitend uutils
+
+# spell-checker:ignore () executables msls dircolors
+
+env:
+  PROJECT_NAME: msls
+  PROJECT_DESC: "`ls` for windows"
+  PROJECT_EXES: "ls dircolors"
+
+on: [pull_request, push]
+
+jobs:
+  style:
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - { os: windows-2019 }
+    runs-on: ${{ matrix.job.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - run: cmd.exe /d/c tests\t.style.bat
+
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - { os: windows-2019, compiler: cl, arch: x32 }
+          - { os: windows-2019, compiler: cl, arch: x64 }
+    runs-on: ${{ matrix.job.os }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Initialize workflow variables
+      id: vars
+      shell: bash
+      run: |
+        outputs() { for var in "$@" ; do echo steps.vars.outputs.${var}="${!var}"; echo ::set-output name=${var}::${!var}; done ; }
+        # architecture/platform vars
+        EXE_suffix='' ; case '${{ matrix.job.os }}' in windows-*) EXE_suffix=".exe" ;; esac
+        outputs EXE_suffix
+        # directories
+        BUILD_DIR='#build'
+        STAGING_DIR='_staging'
+        outputs BUILD_DIR STAGING_DIR
+        # normalize ARCH_ID
+        case '${{ matrix.job.arch }}' in
+          32 | x32 | x86 | i686) ARCH_ID='x86' ; CONFIG_ARCH_ID='i686' ; CC_ARCH_ID='32' ;;
+          64 | x64 | x86_64) ARCH_ID='x64' ; CONFIG_ARCH_ID='x86_64' ; CC_ARCH_ID='64' ;;
+          *) ARCH_ID='${{ matrix.job.arch }}' ;;
+        esac;
+        outputs ARCH_ID CONFIG_ARCH_ID CC_ARCH_ID
+        # parse commit reference info
+        echo GITHUB_REF=${GITHUB_REF}
+        echo GITHUB_SHA=${GITHUB_SHA}
+        REF_NAME="${GITHUB_REF#refs/*/}"
+        unset REF_BRANCH ; case "${GITHUB_REF}" in refs/heads/*) REF_BRANCH="${GITHUB_REF#refs/heads/}" ;; esac;
+        unset REF_TAG ; case "${GITHUB_REF}" in refs/tags/*) REF_TAG="${GITHUB_REF#refs/tags/}" ;; esac;
+        REF_SHAS="${GITHUB_SHA:0:8}"
+        outputs REF_BRANCH REF_NAME REF_SHAS REF_TAG
+        # package name
+        PKG_suffix=".tar.gz" ; case '${{ matrix.job.os }}' in windows-*) PKG_suffix=".zip" ;; esac;
+        OS_name=$( echo "${{ matrix.job.os }}" | grep -Eo '^\s*([^-]+)' | tr '[:upper:]' '[:lower:]' )
+        PKG_OSID=${OS_name} ; case "${OS_name}" in ubuntu) PKG_OSID=linux ;; esac
+        PKG_stem="${PROJECT_NAME}-${REF_TAG:-$REF_SHAS}-${PKG_OSID}-${{ matrix.job.arch }}"
+        PKG_name="${PKG_stem}${PKG_suffix}"
+        PKG_DIR="${STAGING_DIR}/${PKG_stem}"
+        outputs PKG_DIR PKG_OSID PKG_name PKG_stem PKG_suffix
+        # deployable tag? (ie, leading "vM" or "M"; M == version number)
+        unset DEPLOY ; if [[ $REF_TAG =~ ^[vV]?[0-9].* ]]; then DEPLOY='true' ; fi
+        outputs DEPLOY
+        # * strip executable?
+        STRIP="strip" ; case '${{ matrix.job.os }}' in windows-*) STRIP='' ;; esac;
+        outputs STRIP
+
+    - name: Create/configure any needed build/workspace
+      shell: bash
+      run: |
+        # create build/work space
+        mkdir -p '${{ steps.vars.outputs.BUILD_DIR }}'
+        mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'
+        mkdir -p '${{ steps.vars.outputs.PKG_DIR }}'/bin
+        mkdir -p '${{ steps.vars.outputs.STAGING_DIR }}'
+
+    - name: Enable/config MSVC environment (if/when needed)
+      uses: ilammy/msvc-dev-cmd@v1.3.0
+      with:
+        arch: "${{ steps.vars.outputs.ARCH_ID }}"
+
+    - name: Install/setup build prerequisites
+      shell: bash
+      run: |
+        add_env() { for var in "$@" ; do echo "${var}=${!var}" >> $GITHUB_ENV ; done ; }
+        ## install/setup prerequisites
+        case '${{ matrix.job.os }}' in
+          windows-*)
+            case '${{ matrix.job.compiler }}' in clang) echo "C:/Program Files/LLVM/bin" >> $GITHUB_PATH ;; esac;
+          ;;
+        esac
+        case '${{ matrix.job.compiler }}' in
+          cl) CC=cl ; CXX=cl
+            # repair for link path error (o/w '/usr/bin/link' takes priority)
+            LD=$(which "${CC}")/../link.exe
+            ;;
+          clang) CC=clang ; CXX=clang++ ; LD=${CXX} ;;
+          gcc) CC=gcc ; CXX=g++ ; LD=${CXX} ;;
+        esac
+        add_env CC CXX LD
+
+    - name: Info
+      shell: bash
+      run: |
+        # display environment
+        ## commit info
+        echo "## commit"
+        echo GITHUB_REF=${GITHUB_REF}
+        echo GITHUB_SHA=${GITHUB_SHA}
+        ## tooling info display
+        echo "## tooling"
+        which cl 2>/dev/null && (cl 2>&1 | head -1) || true
+        which clang 2>/dev/null && (clang --version | head -1) || true
+        which gcc 2>/dev/null && (gcc --version | head -1) || true
+        which link 2>/dev/null || true
+        echo "CC=${CC}"
+        echo "CXX=${CXX}"
+        echo "LD=${LD}"
+
+    - name: Build
+      shell: bash
+      run: |
+        cmd.exe /d/c "set \"BUILD_DIR=%CD%\\${{ steps.vars.outputs.BUILD_DIR }}\" && build.bat"
+        for exe in ${PROJECT_EXES} ; do
+          cp '${{ steps.vars.outputs.BUILD_DIR }}'/*/*/"${exe}${{ steps.vars.outputs.EXE_suffix }}" '${{ steps.vars.outputs.STAGING_DIR }}/${{ steps.vars.outputs.PKG_stem }}/bin/'
+        done
+        # `strip` any/all binaries (if needed)
+        if [ -n '${{ steps.vars.outputs.STRIP }}' ]; then '${{ steps.vars.outputs.STRIP }}' '${{ steps.vars.outputs.STAGING_DIR }}/${{ steps.vars.outputs.PKG_stem }}/bin'/* ; fi
+
+    - name: Test (sub-executables)
+      shell: bash
+      run: cmd.exe /d/c "set \"BUILD_DIR=%CD%\\${{ steps.vars.outputs.BUILD_DIR }}\" && build.bat test"
+
+    - name: Test (repository)
+      shell: bash
+      run: |
+        for file in tests/* ; do
+          if [ -f "${file}" ]; then
+            case "${file,,}" in *.bat|*.cmd) cmd.exe /d/c "${file//\//\\}" ;; *.exe) "${file//\//\\}" ;; *) bash "${file}" ;; esac
+          fi
+        done
+
+    - name: Archive artifacts
+      uses: actions/upload-artifact@master
+      with:
+        name: ${{ steps.vars.outputs.PKG_stem }}
+        path: ${{ steps.vars.outputs.PKG_DIR }}/bin/*
+
+    - name: Package
+      shell: bash
+      run: |
+        ## package artifact(s)
+        PKG_DIR='${{ steps.vars.outputs.PKG_DIR }}'
+        # add README and LICENSE to package
+        ## * spell-checker:ignore EADME ICENSE
+        (shopt -s nullglob; for f in [R]'EADME'{,.*}; do cp $f "${PKG_DIR}"/ ; done)
+        (shopt -s nullglob; for f in [L]'ICENSE'{-*,}{,.*}; do cp $f "${PKG_DIR}"/ ; done)
+        # create compressed package
+        pushd "${PKG_DIR}"/ >/dev/null
+        case '${{ matrix.job.os }}' in
+          windows-*) 7z -y a '../${{ steps.vars.outputs.PKG_NAME }}' * | tail -2 ;;
+          *) tar czf '../${{ steps.vars.outputs.PKG_NAME }}' * ;;
+        esac
+        popd >/dev/null
+
+    - name: Publish
+      if: steps.vars.outputs.DEPLOY
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          ${{ steps.vars.outputs.STAGING_DIR }}/${{ steps.vars.outputs.PKG_NAME }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
